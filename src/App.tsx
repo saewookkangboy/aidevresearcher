@@ -1,5 +1,12 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useEffect, useState } from 'react';
 import { ResourceProvider, useResources } from './contexts/ResourceContext';
+import { RoleProvider } from './contexts/RoleContext';
 import { Header } from './components/common/Header';
 import { SearchBar } from './components/search/SearchBar';
 import { FilterPanel } from './components/search/FilterPanel';
@@ -127,7 +134,9 @@ function AppContent() {
 function App() {
   return (
     <ResourceProvider>
-      <AppContent />
+      <RoleProvider>
+        <AppContent />
+      </RoleProvider>
     </ResourceProvider>
   );
 }

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { ResourceType, ResourceCategory } from './types';
 
 export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {

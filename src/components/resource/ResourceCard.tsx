@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useState } from 'react';
 import { Resource, LinkStatus } from '../../utils/types';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_TO_CATEGORY, CATEGORY_LABELS, CATEGORY_ICONS } from '../../utils/constants';

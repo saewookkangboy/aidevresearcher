@@ -71,5 +71,9 @@ src/
 
 ## 📄 라이선스
 
-MIT
+Copyright (c) 2025 Park Chunghyo
+
+MIT License
+
+This software was developed with assistance from Cursor AI and Codex.
 

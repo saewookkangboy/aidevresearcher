@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useState, FormEvent } from 'react';
 import { Search } from 'lucide-react';
 import { SearchQuery } from '../../utils/types';

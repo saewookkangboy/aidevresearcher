@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import { useURLIngestion } from '../../hooks/useURLIngestion';
 import { LoadingSpinner } from '../common/LoadingSpinner';

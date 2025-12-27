@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { LinkHealthStatus } from '../../utils/types';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { ReactNode } from 'react';
 import { AutoResearchStatus } from '../../utils/types';
 import { Twitter, Loader2 } from 'lucide-react';

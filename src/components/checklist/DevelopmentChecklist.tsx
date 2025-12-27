@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useEffect, useState } from 'react';
 import { useChecklist } from '../../contexts/ChecklistContext';
 import { DevelopmentTask, AgentRole } from '../../utils/types';

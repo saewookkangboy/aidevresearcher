@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useEffect, useState } from 'react';
 import { LinkHealthStatus } from '../../utils/types';
 import { Activity, RefreshCcw } from 'lucide-react';

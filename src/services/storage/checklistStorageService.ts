@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { DevelopmentChecklist } from '../../utils/types';
 
 const CHECKLIST_STORAGE_KEY = 'vibe_coding_checklists';

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useMemo, useState } from 'react';
 import { useResources } from '../../contexts/ResourceContext';
 import { Resource } from '../../utils/types';

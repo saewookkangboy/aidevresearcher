@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { LinkStatus } from '../../utils/types';
 import { LINK_STATUS_COLORS } from '../../utils/constants';
 

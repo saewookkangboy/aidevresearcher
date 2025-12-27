@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { Clock3, RefreshCw, Trash2 } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
 

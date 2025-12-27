@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { Resource } from '../../utils/types';
 import { STORAGE_KEY } from '../../utils/constants';
 

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { ResourceType, ResourceCategory } from './types';
 
 // 자연어 의도 파악을 위한 간단한 키워드 매칭

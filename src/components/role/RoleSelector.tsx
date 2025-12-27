@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2025 Park Chunghyo
+ * 
+ * This software was developed with assistance from Cursor AI and Codex.
+ */
+
 import { useState } from 'react';
 import { useRole, ROLE_LABELS, ROLE_ICONS } from '../../contexts/RoleContext';
 import { AgentRole } from '../../utils/types';
