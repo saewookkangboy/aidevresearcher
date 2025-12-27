@@ -16,11 +16,12 @@ export class LinkHealthService {
         return 'broken';
       }
 
-      // 개발 환경에서는 프록시 서비스 사용을 건너뛰고 직접 요청으로 바로 이동
-      // 프록시 서비스는 rate limiting과 CORS 문제로 인해 개발 환경에서 불안정함
-      // 프로덕션에서는 백엔드 API를 통해 검증하는 것을 권장
+      // 개발 환경에서는 실제 네트워크 요청 없이 시뮬레이션
+      // CORS 오류와 rate limiting 문제를 완전히 방지
       if (import.meta.env.DEV) {
-        return await this.checkLinkDirect(url);
+        // 개발 환경에서는 URL 형식만 검증하고 항상 active로 반환
+        // 실제 체크는 프로덕션 환경에서만 수행
+        return 'active';
       }
 
       // 프로덕션 환경에서만 프록시 서비스 사용 시도

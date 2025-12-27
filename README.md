@@ -29,6 +29,7 @@ npm run build
 1. **통합 리소스 검색**
    - GitHub 라이브러리, API, CLI 확장도구, 에이전트 스킬, 스타터 키트 통합 검색
    - 자연어 처리 기반 의도 파악
+   - **50개 이상의 Gemini CLI Extensions 통합** (MCP 서버, 데이터베이스, 브라우저 자동화, 클라우드 서비스 등)
 
 2. **소셜 트렌드 오토 리서치**
    - X (Twitter), Threads에서 #aiagent, #vibecoding 해시태그 모니터링
