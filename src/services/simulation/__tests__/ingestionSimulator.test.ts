@@ -1,24 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { IngestionSimulator } from '../ingestionSimulator';
-import { AIParsingService } from '../../api/aiParsingService';
 import { Resource } from '../../../utils/types';
 
 // Mock AIParsingService
+const mockAnalyzeURL = vi.fn();
 vi.mock('../../api/aiParsingService', () => ({
-  AIParsingService: vi.fn().mockImplementation(() => ({
-    analyzeURL: vi.fn(),
-  })),
+  AIParsingService: class {
+    analyzeURL = mockAnalyzeURL;
+  },
 }));
 
 describe('IngestionSimulator', () => {
   let simulator: IngestionSimulator;
-  let mockAIService: any;
 
   beforeEach(() => {
-    mockAIService = {
-      analyzeURL: vi.fn(),
-    };
-    (AIParsingService as any).mockImplementation(() => mockAIService);
+    vi.clearAllMocks();
     simulator = new IngestionSimulator();
   });
 
@@ -35,7 +31,7 @@ describe('IngestionSimulator', () => {
         sourceType: 'GITHUB' as const,
       };
 
-      mockAIService.analyzeURL.mockResolvedValue(mockAnalysis);
+      mockAnalyzeURL.mockResolvedValue(mockAnalysis);
 
       const result = await simulator.ingestURL('https://github.com/test/test-library');
 
@@ -49,15 +45,15 @@ describe('IngestionSimulator', () => {
     });
 
     it('should throw error for invalid URL format', async () => {
-      await expect(simulator.ingestURL('invalid-url')).rejects.toThrow('Invalid URL format');
+      await expect(simulator.ingestURL('invalid-url')).rejects.toThrow('유효하지 않은 URL 형식');
     });
 
     it('should throw error for URL without http/https', async () => {
-      await expect(simulator.ingestURL('ftp://example.com')).rejects.toThrow('Invalid URL format');
+      await expect(simulator.ingestURL('ftp://example.com')).rejects.toThrow('유효하지 않은 URL 형식');
     });
 
     it('should use default values when analysis returns partial data', async () => {
-      mockAIService.analyzeURL.mockResolvedValue({
+      mockAnalyzeURL.mockResolvedValue({
         title: 'Test',
       });
 
@@ -70,7 +66,7 @@ describe('IngestionSimulator', () => {
     });
 
     it('should infer Python platform from pip command', async () => {
-      mockAIService.analyzeURL.mockResolvedValue({
+      mockAnalyzeURL.mockResolvedValue({
         title: 'Python Lib',
         command: 'pip install python-lib',
       });
@@ -81,7 +77,7 @@ describe('IngestionSimulator', () => {
     });
 
     it('should infer Rust platform from cargo command', async () => {
-      mockAIService.analyzeURL.mockResolvedValue({
+      mockAnalyzeURL.mockResolvedValue({
         title: 'Rust Crate',
         command: 'cargo add rust-crate',
       });
@@ -92,7 +88,7 @@ describe('IngestionSimulator', () => {
     });
 
     it('should infer Go platform from go get command', async () => {
-      mockAIService.analyzeURL.mockResolvedValue({
+      mockAnalyzeURL.mockResolvedValue({
         title: 'Go Package',
         command: 'go get github.com/example/package',
       });
@@ -103,7 +99,7 @@ describe('IngestionSimulator', () => {
     });
 
     it('should generate tags from title and type', async () => {
-      mockAIService.analyzeURL.mockResolvedValue({
+      mockAnalyzeURL.mockResolvedValue({
         title: 'React Component Library',
         type: 'LIBRARY',
       });
@@ -115,7 +111,7 @@ describe('IngestionSimulator', () => {
     });
 
     it('should handle AI service errors', async () => {
-      mockAIService.analyzeURL.mockRejectedValue(new Error('AI service error'));
+      mockAnalyzeURL.mockRejectedValue(new Error('AI service error'));
 
       await expect(simulator.ingestURL('https://example.com')).rejects.toThrow('AI service error');
     });
@@ -135,7 +131,7 @@ describe('IngestionSimulator', () => {
         command: 'npm install new-package',
       };
 
-      mockAIService.analyzeURL.mockResolvedValue(mockAnalysis);
+      mockAnalyzeURL.mockResolvedValue(mockAnalysis);
 
       const result = await simulator.updateMetadataForURL(
         'https://example.com',
@@ -164,7 +160,7 @@ describe('IngestionSimulator', () => {
         type: 'LIBRARY',
       };
 
-      mockAIService.analyzeURL.mockRejectedValue(new Error('Analysis failed'));
+      mockAnalyzeURL.mockRejectedValue(new Error('Analysis failed'));
 
       const result = await simulator.updateMetadataForURL(
         'https://example.com',
@@ -181,7 +177,7 @@ describe('IngestionSimulator', () => {
         description: 'Existing description',
       };
 
-      mockAIService.analyzeURL.mockResolvedValue({});
+      mockAnalyzeURL.mockResolvedValue({});
 
       const result = await simulator.updateMetadataForURL(
         'https://example.com',
