@@ -10,16 +10,14 @@ export class IngestionSimulator {
 
   async ingestURL(url: string): Promise<Resource> {
     // 1. URL 유효성 검증
-    if (!url.startsWith('http')) {
-      throw new Error('Invalid URL format');
-    }
+    this.validateURL(url);
 
     // 2. AI 분석
     const analysis = await this.aiService.analyzeURL(url);
 
     // 3. Resource 객체 생성
     const resource: Resource = {
-      id: `resource_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `resource_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
       title: analysis.title || 'Untitled Resource',
       type: analysis.type || 'LIBRARY',
       description: analysis.description || 'No description available',
@@ -39,26 +37,53 @@ export class IngestionSimulator {
     return resource;
   }
 
+  private validateURL(url: string): void {
+    try {
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        throw new Error('URL은 http 또는 https 프로토콜이어야 합니다');
+      }
+    } catch (error) {
+      throw new Error(`유효하지 않은 URL 형식: ${url}`);
+    }
+  }
+
   private inferPlatforms(command: string): string[] {
     const platforms: string[] = [];
+    const commandLower = command.toLowerCase();
     
-    if (command.includes('pip')) {
-      platforms.push('Python');
+    // Package manager 기반 플랫폼 추론
+    const platformMap: Record<string, string[]> = {
+      'pip': ['Python'],
+      'pip3': ['Python'],
+      'npm': ['Node.js', 'JavaScript'],
+      'yarn': ['Node.js', 'JavaScript'],
+      'pnpm': ['Node.js', 'JavaScript'],
+      'cargo': ['Rust'],
+      'go get': ['Go'],
+      'composer': ['PHP'],
+      'gem': ['Ruby'],
+      'mvn': ['Java'],
+      'gradle': ['Java', 'Kotlin'],
+      'nuget': ['C#', '.NET'],
+      'pub': ['Dart', 'Flutter'],
+    };
+
+    // 명령어에서 플랫폼 매칭
+    for (const [key, values] of Object.entries(platformMap)) {
+      if (commandLower.includes(key)) {
+        platforms.push(...values);
+      }
     }
-    if (command.includes('npm') || command.includes('yarn') || command.includes('node')) {
-      platforms.push('Node.js');
-      if (command.includes('react') || command.includes('vue') || command.includes('angular')) {
+
+    // 프레임워크 기반 추가 추론
+    if (commandLower.includes('react') || commandLower.includes('vue') || commandLower.includes('angular')) {
+      if (!platforms.includes('JavaScript')) {
         platforms.push('JavaScript');
       }
     }
-    if (command.includes('cargo')) {
-      platforms.push('Rust');
-    }
-    if (command.includes('go get')) {
-      platforms.push('Go');
-    }
 
-    return platforms.length > 0 ? platforms : ['General'];
+    return platforms.length > 0 ? [...new Set(platforms)] : ['General'];
   }
 
   private generateTags(analysis: Partial<Resource>): string[] {
@@ -79,9 +104,7 @@ export class IngestionSimulator {
   async updateMetadataForURL(url: string, existingResource: Partial<Resource>): Promise<Partial<Resource>> {
     // URL 변경 시 메타 정보 다시 분석
     try {
-      if (!url.startsWith('http')) {
-        return {};
-      }
+      this.validateURL(url);
 
       const analysis = await this.aiService.analyzeURL(url);
       
