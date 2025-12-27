@@ -33,21 +33,55 @@ export function SearchBar({ onSearch, placeholder = '검색어를 입력하세�
     });
   };
 
+  const exampleQueries = [
+    '이미지 분석 봇 만들기',
+    'Python AI 라이브러리',
+    '웹사이트 SEO 개선',
+    '챗봇 만들기',
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="w-full mb-3">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="w-5 h-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={placeholder}
+            aria-label="도구 검색"
+            className="block w-full pl-12 pr-4 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base shadow-sm transition-all"
+          />
         </div>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          aria-label="리소스 검색"
-          className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 focus:outline-none focus:placeholder-gray-400 dark:focus:placeholder-gray-500 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm"
-        />
-      </div>
-    </form>
+      </form>
+      {query.length === 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400">예시:</span>
+          {exampleQueries.map((example, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setQuery(example);
+                const inferredCategories = inferCategoryFromQuery(example);
+                const inferredTypes = inferResourceTypeFromQuery(example);
+                const keywordTags = extractKeywords(example);
+                onSearch({ 
+                  text: example,
+                  category: inferredCategories.length > 0 ? inferredCategories : undefined,
+                  type: inferredTypes.length > 0 ? inferredTypes : undefined,
+                  tags: keywordTags.length > 0 ? keywordTags : undefined,
+                });
+              }}
+              className="text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

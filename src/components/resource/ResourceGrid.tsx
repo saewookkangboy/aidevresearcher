@@ -19,8 +19,8 @@ export function ResourceGrid({ resources, onViewDetails, onClearSearch }: Resour
     return (
       <EmptyState
         icon="search"
-        title="리소스를 찾을 수 없습니다"
-        description="검색어를 변경하거나 필터를 조정해보세요. 다른 키워드로 검색하면 원하는 리소스를 찾을 수 있습니다."
+        title="도구를 찾을 수 없습니다"
+        description="검색어를 변경하거나 필터를 조정해보세요. 다른 키워드로 검색하면 원하는 도구를 찾을 수 있습니다."
         action={onClearSearch ? {
           label: '필터 초기화',
           onClick: onClearSearch,

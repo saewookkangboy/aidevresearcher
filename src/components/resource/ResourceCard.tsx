@@ -327,8 +327,8 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">원클릭 실행 (모의)</p>
-              <p className="text-xs text-gray-600 dark:text-gray-300">터미널에 붙여넣기 전에 흐름을 미리 확인하세요.</p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">명령어 미리보기</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">터미널에 붙여넣기 전에 실행 흐름을 확인할 수 있습니다.</p>
             </div>
             <button
               onClick={handleRun}

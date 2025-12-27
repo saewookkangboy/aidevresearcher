@@ -29,22 +29,25 @@ export function RoleSelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+          currentRole
+            ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-300 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-900/50'
+            : 'bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+        }`}
+        title={currentRole ? `${ROLE_LABELS[currentRole]} 역할이 선택되었습니다` : '역할을 선택하면 맞춤 도구를 추천해드립니다'}
       >
         {currentRole ? (
           <>
             <span className="text-xl">{ROLE_ICONS[currentRole]}</span>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
               {ROLE_LABELS[currentRole]}
             </span>
-            {currentRole && (
-              <Check className="w-4 h-4 text-green-600" />
-            )}
+            <Check className="w-4 h-4 text-primary-600 dark:text-primary-400" />
           </>
         ) : (
           <>
-            <User className="w-5 h-5 text-gray-400" />
-            <span className="text-sm text-gray-500">역할 선택</span>
+            <User className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">역할 선택</span>
           </>
         )}
       </button>
@@ -55,19 +58,22 @@ export function RoleSelector() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-            <div className="p-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase px-3 py-2">
+          <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20">
+            <div className="p-3">
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-3 py-2 mb-1">
                 역할 선택
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 px-3 mb-2">
+                역할을 선택하면 맞춤 도구를 추천해드립니다
+              </p>
               {AVAILABLE_ROLES.map((role) => (
                 <button
                   key={role}
                   onClick={() => handleRoleSelect(role)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                     currentRole === role
-                      ? 'bg-primary-50 text-primary-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border border-primary-200 dark:border-primary-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <span className="text-xl">{ROLE_ICONS[role]}</span>
@@ -82,7 +88,7 @@ export function RoleSelector() {
                   <div className="border-t border-gray-200 my-1" />
                   <button
                     onClick={handleClearRole}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <User className="w-4 h-4" />
                     <span>역할 초기화</span>

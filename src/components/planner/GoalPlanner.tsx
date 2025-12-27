@@ -97,7 +97,7 @@ export function GoalPlanner() {
         <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <ClipboardList className="w-4 h-4 text-primary-600" />
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">추천 리소스</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">추천 도구</p>
           </div>
           {topResources.length === 0 ? (
             <p className="text-xs text-gray-500 dark:text-gray-400">검색 결과가 보이면 여기서 바로 실행할 수 있어요.</p>

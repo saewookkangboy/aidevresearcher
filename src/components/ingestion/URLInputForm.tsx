@@ -148,10 +148,10 @@ export function URLInputForm() {
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          목표 기반 추천 (비개발자용)
+          목표 기반 추천
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          하고 싶은 일, 사이트 주소, 선호 스택만 적으면 자동으로 맞춤 검색과 필터를 적용합니다.
+          하고 싶은 일을 간단히 적으면 자동으로 필요한 도구를 찾아드립니다. 기술 용어를 몰라도 괜찮아요!
         </p>
         <form onSubmit={handleIntentSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -218,12 +218,12 @@ export function URLInputForm() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          새 리소스 추가
+          새 도구 추가하기
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              GitHub, PyPI, 또는 문서 URL
+              도구 URL (GitHub, PyPI, 또는 문서 페이지)
             </label>
             <div className="flex gap-2">
               <div className="flex-1">
@@ -308,7 +308,7 @@ export function URLInputForm() {
 
           {success && (
             <SuccessMessage
-              message="리소스가 성공적으로 추가되었습니다!"
+              message="도구가 성공적으로 추가되었습니다!"
               onDismiss={() => setSuccess(false)}
             />
           )}
