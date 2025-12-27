@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vibe-coding-navigator.com/sitemap.xml
+

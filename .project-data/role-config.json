@@ -1,0 +1,26 @@
+{
+  "currentRole": "ui-ux",
+  "roleData": {
+    "name": "UI/UX Designer",
+    "description": "사용자 인터페이스 및 경험 설계",
+    "responsibilities": [
+      "사용자 연구 및 분석",
+      "와이어프레임 및 프로토타입 제작",
+      "디자인 시스템 구축",
+      "사용성 테스트",
+      "디자인 가이드라인 작성"
+    ],
+    "tools": [
+      "Figma",
+      "Sketch",
+      "Adobe XD",
+      "InVision",
+      "UserTesting"
+    ],
+    "permissions": [
+      "read",
+      "design"
+    ]
+  },
+  "setAt": "2025-12-27T05:22:49.868Z"
+}

@@ -1,0 +1,766 @@
+{
+  "todos": [
+    {
+      "id": "mjnum5i5ifwa2utas5",
+      "description": "프로젝트 목표 및 성공 지표 정의",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 기획",
+      "created_at": "2025-12-27T05:16:58.589Z",
+      "updated_at": "2025-12-27T05:16:58.590Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum648mx4qmf7pqmm",
+      "description": "스테이크홀더 인터뷰 및 요구사항 수집",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 기획",
+      "created_at": "2025-12-27T05:16:59.384Z",
+      "updated_at": "2025-12-27T05:16:59.385Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum6s7xcrsq1wnm5",
+      "description": "MVP 범위 및 우선순위 결정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 기획",
+      "created_at": "2025-12-27T05:17:00.247Z",
+      "updated_at": "2025-12-27T05:17:00.248Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum7f8r5d7zc792mi",
+      "description": "User Story 및 Acceptance Criteria 작성",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: 사양 문서 작성",
+      "created_at": "2025-12-27T05:17:01.076Z",
+      "updated_at": "2025-12-27T05:17:01.077Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum87zuk5pyykxslr",
+      "description": "Figma 와이어프레임 작성",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: 사양 문서 작성",
+      "created_at": "2025-12-27T05:17:02.111Z",
+      "updated_at": "2025-12-27T05:17:02.112Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum8vctv8ynfwmowm",
+      "description": "마일스톤 및 스프린트 계획 수립",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 프로젝트 관리",
+      "created_at": "2025-12-27T05:17:02.952Z",
+      "updated_at": "2025-12-27T05:17:02.953Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnum9u3uxfilyd2gq",
+      "description": "팀원 역할 및 책임 정의",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 프로젝트 관리",
+      "created_at": "2025-12-27T05:17:04.203Z",
+      "updated_at": "2025-12-27T05:17:04.204Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumamnxnjob6lmo3q",
+      "description": "일일 스탠드업 및 진행 상황 추적",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 진행 상황 관리",
+      "created_at": "2025-12-27T05:17:05.231Z",
+      "updated_at": "2025-12-27T05:17:05.232Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumb9w2d990iv6wua",
+      "description": "QA 계획 수립 및 배포 계획",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 품질 관리 및 배포",
+      "created_at": "2025-12-27T05:17:06.068Z",
+      "updated_at": "2025-12-27T05:17:06.069Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumd4y6hvpzny46a8",
+      "description": "Vite/Next.js 프로젝트 초기화 및 의존성 설치",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:08.482Z",
+      "updated_at": "2025-12-27T05:17:08.483Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumdtot8kn2agcxa",
+      "description": "ESLint, Prettier, TypeScript 개발 환경 설정",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:09.372Z",
+      "updated_at": "2025-12-27T05:17:09.373Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumencp2yhgd1iu2b",
+      "description": "디자인 시스템 구축 (컬러, 타이포그래피, 스페이싱)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: UI 컴포넌트 개발",
+      "created_at": "2025-12-27T05:17:10.440Z",
+      "updated_at": "2025-12-27T05:17:10.441Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumfh9u1r1ghgjimf",
+      "description": "기본 컴포넌트 개발 (Button, Input, Card 등)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: UI 컴포넌트 개발",
+      "created_at": "2025-12-27T05:17:11.517Z",
+      "updated_at": "2025-12-27T05:17:11.518Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumg48t797y593rf",
+      "description": "Context API/Redux 상태 관리 설정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 상태 관리 및 라우팅",
+      "created_at": "2025-12-27T05:17:12.344Z",
+      "updated_at": "2025-12-27T05:17:12.345Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumgqqrayn7u3cu6f",
+      "description": "React Router 라우팅 구성",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 상태 관리 및 라우팅",
+      "created_at": "2025-12-27T05:17:13.154Z",
+      "updated_at": "2025-12-27T05:17:13.156Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumhejlvrgi5mf3gf",
+      "description": "백엔드 API 연동 및 데이터 fetching",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 상태 관리 및 라우팅",
+      "created_at": "2025-12-27T05:17:14.011Z",
+      "updated_at": "2025-12-27T05:17:14.012Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumi1glv3u8rx1qno",
+      "description": "Tailwind CSS 스타일링 적용",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 스타일링 및 반응형",
+      "created_at": "2025-12-27T05:17:14.836Z",
+      "updated_at": "2025-12-27T05:17:14.837Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumiug94dvjsar4es",
+      "description": "모바일, 태블릿, 데스크톱 반응형 디자인 구현",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 스타일링 및 반응형",
+      "created_at": "2025-12-27T05:17:15.880Z",
+      "updated_at": "2025-12-27T05:17:15.881Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumji8nu5ncs1clv8",
+      "description": "Jest/Vitest 단위 테스트 작성",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "Phase 5: 테스트 및 최적화",
+      "created_at": "2025-12-27T05:17:16.736Z",
+      "updated_at": "2025-12-27T05:17:16.737Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumk6eioe0mk8zufd",
+      "description": "코드 스플리팅 및 성능 최적화",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 테스트 및 최적화",
+      "created_at": "2025-12-27T05:17:17.606Z",
+      "updated_at": "2025-12-27T05:17:17.607Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnummeiv8n9umvyvtm",
+      "description": "FastAPI/Express/Django 프레임워크 선택 및 프로젝트 초기화",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:20.490Z",
+      "updated_at": "2025-12-27T05:17:20.492Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumn6a4l5du90z34i",
+      "description": "PostgreSQL/MongoDB 데이터베이스 설정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:21.490Z",
+      "updated_at": "2025-12-27T05:17:21.491Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumnsv1yyu9klvowh",
+      "description": ".env 파일 및 환경 변수 관리 설정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:22.303Z",
+      "updated_at": "2025-12-27T05:17:22.304Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumoet8eko49uv2a9",
+      "description": "OpenAPI/Swagger API 스펙 정의",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: API 설계 및 개발",
+      "created_at": "2025-12-27T05:17:23.093Z",
+      "updated_at": "2025-12-27T05:17:23.094Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnump1pp15kuxnsu1",
+      "description": "CRUD API 엔드포인트 구현",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: API 설계 및 개발",
+      "created_at": "2025-12-27T05:17:23.917Z",
+      "updated_at": "2025-12-27T05:17:23.919Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumppno2uobfc438",
+      "description": "JWT/OAuth 인증 시스템 구현",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: API 설계 및 개발",
+      "created_at": "2025-12-27T05:17:24.779Z",
+      "updated_at": "2025-12-27T05:17:24.780Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumqiwy443mj811o",
+      "description": "ERD 작성 및 데이터 모델 설계",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 데이터베이스 모델링",
+      "created_at": "2025-12-27T05:17:25.832Z",
+      "updated_at": "2025-12-27T05:17:25.834Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumrby84wgoe8885",
+      "description": "데이터베이스 마이그레이션 스크립트 작성",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 데이터베이스 모델링",
+      "created_at": "2025-12-27T05:17:26.878Z",
+      "updated_at": "2025-12-27T05:17:26.879Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumrz8tya4zdwmlef",
+      "description": "비즈니스 로직 서비스 레이어 구현",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 비즈니스 로직 구현",
+      "created_at": "2025-12-27T05:17:27.716Z",
+      "updated_at": "2025-12-27T05:17:27.717Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumslshujdnpts01",
+      "description": "입력 데이터 유효성 검증 로직 구현",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 비즈니스 로직 구현",
+      "created_at": "2025-12-27T05:17:28.528Z",
+      "updated_at": "2025-12-27T05:17:28.529Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumt914dh6xedpzjv",
+      "description": "서비스 로직 단위 테스트 작성",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "Phase 5: 테스트 및 배포",
+      "created_at": "2025-12-27T05:17:29.365Z",
+      "updated_at": "2025-12-27T05:17:29.367Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumu07h3i4p6xr7vt",
+      "description": "Docker 및 CI/CD 파이프라인 설정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 테스트 및 배포",
+      "created_at": "2025-12-27T05:17:30.343Z",
+      "updated_at": "2025-12-27T05:17:30.344Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumvb3vy7gxjex8kg",
+      "description": "데이터베이스 서버 인프라 설계 및 구축",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "인프라 구축",
+      "created_at": "2025-12-27T05:17:32.031Z",
+      "updated_at": "2025-12-27T05:17:32.032Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumw32wyi3g1p0ta",
+      "description": "데이터베이스 백업 및 복구 전략 수립",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "인프라 구축",
+      "created_at": "2025-12-27T05:17:33.038Z",
+      "updated_at": "2025-12-27T05:17:33.039Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumwqdbdjk8q2333o",
+      "description": "데이터베이스 성능 모니터링 설정",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "모니터링 및 최적화",
+      "created_at": "2025-12-27T05:17:33.877Z",
+      "updated_at": "2025-12-27T05:17:33.878Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumxdu44jv0dye74m",
+      "description": "쿼리 최적화 및 인덱스 관리",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "모니터링 및 최적화",
+      "created_at": "2025-12-27T05:17:34.722Z",
+      "updated_at": "2025-12-27T05:17:34.724Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumysafb7s1afkimc",
+      "description": "보안 취약점 스캔 및 분석",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 감사",
+      "created_at": "2025-12-27T05:17:36.538Z",
+      "updated_at": "2025-12-27T05:17:36.539Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnumzfp625orlibqd8",
+      "description": "인증/인가 시스템 보안 검토",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 감사",
+      "created_at": "2025-12-27T05:17:37.381Z",
+      "updated_at": "2025-12-27T05:17:37.383Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun09u4bpfh9f1yn6",
+      "description": "HTTPS/TLS 설정 및 인증서 관리",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 설정",
+      "created_at": "2025-12-27T05:17:38.466Z",
+      "updated_at": "2025-12-27T05:17:38.467Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun0wcktp23agz9hb",
+      "description": "Secrets 관리 시스템 구축 (Vault, AWS Secrets Manager)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 설정",
+      "created_at": "2025-12-27T05:17:39.276Z",
+      "updated_at": "2025-12-27T05:17:39.277Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun1j2o9dhmyhjwps",
+      "description": "CORS, CSRF, XSS 방어 설정",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 설정",
+      "created_at": "2025-12-27T05:17:40.094Z",
+      "updated_at": "2025-12-27T05:17:40.096Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun26xjx03dfc9hch",
+      "description": "보안 로깅 및 모니터링 설정",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "보안 모니터링",
+      "created_at": "2025-12-27T05:17:40.953Z",
+      "updated_at": "2025-12-27T05:17:40.954Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun3kcbco4rk8sk3",
+      "description": "사용자 인터뷰 및 페르소나 정의",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 디자인 리서치",
+      "created_at": "2025-12-27T05:17:42.732Z",
+      "updated_at": "2025-12-27T05:17:42.733Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun488qshbmdu9p8",
+      "description": "경쟁사 UX/UI 분석",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 1: 디자인 리서치",
+      "created_at": "2025-12-27T05:17:43.592Z",
+      "updated_at": "2025-12-27T05:17:43.593Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun50bwtnh0ovhi5j",
+      "description": "컬러 시스템 및 타이포그래피 정의",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: 디자인 시스템 구축",
+      "created_at": "2025-12-27T05:17:44.603Z",
+      "updated_at": "2025-12-27T05:17:44.604Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun5od636zh0qwb2",
+      "description": "Figma 컴포넌트 라이브러리 구축",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 2: 디자인 시스템 구축",
+      "created_at": "2025-12-27T05:17:45.469Z",
+      "updated_at": "2025-12-27T05:17:45.471Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun6g5ybg5n3qfk5o",
+      "description": "Figma 와이어프레임 및 하이 피델리티 디자인",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 3: 와이어프레임 및 프로토타입",
+      "created_at": "2025-12-27T05:17:46.469Z",
+      "updated_at": "2025-12-27T05:17:46.470Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun74zkmw1s54rj",
+      "description": "인터랙티브 프로토타입 제작",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "Phase 3: 와이어프레임 및 프로토타입",
+      "created_at": "2025-12-27T05:17:47.363Z",
+      "updated_at": "2025-12-27T05:17:47.364Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun7sp3ocqs2bfz7o",
+      "description": "프로토타입 사용자 테스트 진행",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 사용자 테스트",
+      "created_at": "2025-12-27T05:17:48.217Z",
+      "updated_at": "2025-12-27T05:17:48.218Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun8fofwnug1kz12l",
+      "description": "디자인 스펙 문서화 및 개발팀 핸드오프",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 디자인 핸드오프",
+      "created_at": "2025-12-27T05:17:49.044Z",
+      "updated_at": "2025-12-27T05:17:49.045Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnun9w0cf2pepm539c",
+      "description": "타겟 사용자 페르소나 및 시장 조사",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "마케팅 전략",
+      "created_at": "2025-12-27T05:17:50.928Z",
+      "updated_at": "2025-12-27T05:17:50.930Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnunajni11p02254qm",
+      "description": "브랜딩 및 메시징 전략 수립",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "마케팅 전략",
+      "created_at": "2025-12-27T05:17:51.779Z",
+      "updated_at": "2025-12-27T05:17:51.780Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnunb71lqdmt8sxnhr",
+      "description": "SEO 최적화 전략 수립 및 키워드 리서치",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "SEO 및 콘텐츠",
+      "created_at": "2025-12-27T05:17:52.621Z",
+      "updated_at": "2025-12-27T05:17:52.622Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnunbtjmhp99cjxcff",
+      "description": "콘텐츠 마케팅 계획 수립",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "SEO 및 콘텐츠",
+      "created_at": "2025-12-27T05:17:53.431Z",
+      "updated_at": "2025-12-27T05:17:53.432Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnunch1c7c2jwdwu2g",
+      "description": "소셜 미디어 마케팅 전략 수립",
+      "status": "pending",
+      "priority": "medium",
+      "milestone": "소셜 미디어",
+      "created_at": "2025-12-27T05:17:54.277Z",
+      "updated_at": "2025-12-27T05:17:54.278Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnund3v4q558jf5x3m",
+      "description": "런칭 캠페인 계획 수립",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "런칭 전략",
+      "created_at": "2025-12-27T05:17:55.099Z",
+      "updated_at": "2025-12-27T05:17:55.100Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnusr597f8k886cd24",
+      "description": "Frontend: 테스트 환경 설정 완료 (Vitest)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 테스트 및 최적화",
+      "created_at": "2025-12-27T05:22:06.573Z",
+      "updated_at": "2025-12-27T05:22:06.575Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnuss5ddtnhg9l8apr",
+      "description": "UI/UX: 다크모드 지원 구현 완료",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 스타일링 및 반응형",
+      "created_at": "2025-12-27T05:22:07.873Z",
+      "updated_at": "2025-12-27T05:22:07.875Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnustboeu5f0xyc1xr",
+      "description": "Marketing: SEO 최적화 완료 (메타 태그, sitemap, robots.txt)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "런칭 전략",
+      "created_at": "2025-12-27T05:22:09.396Z",
+      "updated_at": "2025-12-27T05:22:09.398Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnusucy01g7g3ruyqd9",
+      "description": "Security: 보안 헤더 설정 완료",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "보안 설정",
+      "created_at": "2025-12-27T05:22:10.738Z",
+      "updated_at": "2025-12-27T05:22:10.739Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnusv7anfav0ayg4gl",
+      "description": "PM: 배포 문서 및 사용 가이드 작성 완료",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 5: 품질 관리 및 배포",
+      "created_at": "2025-12-27T05:22:11.830Z",
+      "updated_at": "2025-12-27T05:22:11.833Z",
+      "completed_at": null
+    },
+    {
+      "id": "mjnuuj5hi4kr4bwmg8",
+      "description": "UI/UX: 로딩 상태 및 에러 처리 UI 개선 완료 (ErrorMessage, SuccessMessage, EmptyState 컴포넌트 추가)",
+      "status": "pending",
+      "priority": "high",
+      "milestone": "Phase 4: 스타일링 및 반응형",
+      "created_at": "2025-12-27T05:23:29.525Z",
+      "updated_at": "2025-12-27T05:23:29.526Z",
+      "completed_at": null
+    }
+  ],
+  "milestones": [
+    {
+      "name": "Phase 1: 프로젝트 기획",
+      "created_at": "2025-12-27T05:16:58.590Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 2: 사양 문서 작성",
+      "created_at": "2025-12-27T05:17:01.077Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 3: 프로젝트 관리",
+      "created_at": "2025-12-27T05:17:02.953Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 4: 진행 상황 관리",
+      "created_at": "2025-12-27T05:17:05.232Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 5: 품질 관리 및 배포",
+      "created_at": "2025-12-27T05:17:06.069Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 1: 프로젝트 설정",
+      "created_at": "2025-12-27T05:17:08.483Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 2: UI 컴포넌트 개발",
+      "created_at": "2025-12-27T05:17:10.441Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 3: 상태 관리 및 라우팅",
+      "created_at": "2025-12-27T05:17:12.346Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 4: 스타일링 및 반응형",
+      "created_at": "2025-12-27T05:17:14.837Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 5: 테스트 및 최적화",
+      "created_at": "2025-12-27T05:17:16.737Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 2: API 설계 및 개발",
+      "created_at": "2025-12-27T05:17:23.094Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 3: 데이터베이스 모델링",
+      "created_at": "2025-12-27T05:17:25.834Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 4: 비즈니스 로직 구현",
+      "created_at": "2025-12-27T05:17:27.717Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 5: 테스트 및 배포",
+      "created_at": "2025-12-27T05:17:29.367Z",
+      "status": "active"
+    },
+    {
+      "name": "인프라 구축",
+      "created_at": "2025-12-27T05:17:32.032Z",
+      "status": "active"
+    },
+    {
+      "name": "모니터링 및 최적화",
+      "created_at": "2025-12-27T05:17:33.878Z",
+      "status": "active"
+    },
+    {
+      "name": "보안 감사",
+      "created_at": "2025-12-27T05:17:36.539Z",
+      "status": "active"
+    },
+    {
+      "name": "보안 설정",
+      "created_at": "2025-12-27T05:17:38.467Z",
+      "status": "active"
+    },
+    {
+      "name": "보안 모니터링",
+      "created_at": "2025-12-27T05:17:40.954Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 1: 디자인 리서치",
+      "created_at": "2025-12-27T05:17:42.733Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 2: 디자인 시스템 구축",
+      "created_at": "2025-12-27T05:17:44.604Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 3: 와이어프레임 및 프로토타입",
+      "created_at": "2025-12-27T05:17:46.470Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 4: 사용자 테스트",
+      "created_at": "2025-12-27T05:17:48.218Z",
+      "status": "active"
+    },
+    {
+      "name": "Phase 5: 디자인 핸드오프",
+      "created_at": "2025-12-27T05:17:49.045Z",
+      "status": "active"
+    },
+    {
+      "name": "마케팅 전략",
+      "created_at": "2025-12-27T05:17:50.930Z",
+      "status": "active"
+    },
+    {
+      "name": "SEO 및 콘텐츠",
+      "created_at": "2025-12-27T05:17:52.622Z",
+      "status": "active"
+    },
+    {
+      "name": "소셜 미디어",
+      "created_at": "2025-12-27T05:17:54.278Z",
+      "status": "active"
+    },
+    {
+      "name": "런칭 전략",
+      "created_at": "2025-12-27T05:17:55.100Z",
+      "status": "active"
+    }
+  ]
+}
