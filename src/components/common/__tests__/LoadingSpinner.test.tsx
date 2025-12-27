@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 describe('LoadingSpinner', () => {
   it('renders correctly', () => {
     render(<LoadingSpinner />);
-    const spinner = screen.getByRole('generic');
+    const spinner = screen.getByRole('status');
     expect(spinner).toBeInTheDocument();
   });
 
@@ -21,4 +21,3 @@ describe('LoadingSpinner', () => {
     expect(spinner).toBeInTheDocument();
   });
 });
-

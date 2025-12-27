@@ -43,6 +43,8 @@ export function useURLIngestion() {
       
       // 2. 링크 상태 검증
       setValidating(true);
+      // 상태 반영을 보장하기 위해 한 틱 양보
+      await Promise.resolve();
       const linkStatus = await linkHealthService.checkLink(url);
       
       // 3. 검증 결과를 리소스에 반영

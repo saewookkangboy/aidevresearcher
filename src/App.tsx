@@ -33,17 +33,21 @@ function AppContent() {
 
   // 초기화: 링크 헬스 체크 및 Auto Research 시작
   useEffect(() => {
-    // 1초 후 링크 헬스 체크 시작
-    const healthCheckTimer = setTimeout(() => {
-      checkAll();
-    }, LINK_HEALTH_CHECK_DELAY);
+    // 개발 환경에서는 초기 링크 체크를 건너뛰어 CORS 오류 방지
+    // 필요시 수동으로 체크 가능
+    if (!import.meta.env.DEV) {
+      // 프로덕션 환경에서만 자동 체크
+      const healthCheckTimer = setTimeout(() => {
+        checkAll();
+      }, LINK_HEALTH_CHECK_DELAY);
+
+      return () => {
+        clearTimeout(healthCheckTimer);
+      };
+    }
 
     // Auto Research 시작
     start();
-
-    return () => {
-      clearTimeout(healthCheckTimer);
-    };
   }, [checkAll, start]);
 
   // 에러가 변경되면 dismissed 상태 초기화

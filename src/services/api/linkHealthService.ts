@@ -16,12 +16,18 @@ export class LinkHealthService {
         return 'broken';
       }
 
-      // CORS 제한을 우회하기 위해 프록시 서비스 사용 시도
-      // 실제 프로덕션에서는 백엔드 API를 통해 검증하는 것을 권장
+      // 개발 환경에서는 프록시 서비스 사용을 건너뛰고 직접 요청으로 바로 이동
+      // 프록시 서비스는 rate limiting과 CORS 문제로 인해 개발 환경에서 불안정함
+      // 프로덕션에서는 백엔드 API를 통해 검증하는 것을 권장
+      if (import.meta.env.DEV) {
+        return await this.checkLinkDirect(url);
+      }
+
+      // 프로덕션 환경에서만 프록시 서비스 사용 시도
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8초 타임아웃
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃 (짧게 설정)
 
       try {
         // 프록시를 통한 HEAD 요청 시도
@@ -48,23 +54,36 @@ export class LinkHealthService {
       } catch (fetchError) {
         clearTimeout(timeoutId);
         
-        // 타임아웃
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          return 'broken';
-        }
-        
-        // 네트워크 오류나 CORS 오류는 조용히 처리하고 직접 요청으로 폴백
-        // 429 오류도 여기서 처리됨
+        // 타임아웃 또는 네트워크 오류는 직접 요청으로 폴백
+        // 에러를 조용히 처리 (브라우저가 자동으로 출력하는 CORS 오류는 막을 수 없음)
         return await this.checkLinkDirect(url);
       }
     } catch (error) {
-      // 에러를 조용히 처리 (콘솔에 출력하지 않음)
+      // 에러를 조용히 처리
       return 'broken';
     }
   }
 
   private async checkLinkDirect(url: string): Promise<LinkStatus> {
-    // 직접 요청 시도 (CORS 제한으로 실패할 수 있음)
+    // 개발 환경에서는 실제 네트워크 요청 없이 시뮬레이션
+    // CORS 오류를 완전히 방지하기 위해
+    if (import.meta.env.DEV) {
+      // 개발 환경에서는 URL 형식만 검증하고 항상 active로 반환
+      // 실제 체크는 프로덕션 환경에서만 수행
+      try {
+        const urlObj = new URL(url);
+        // GitHub URL은 대부분 유효하다고 가정
+        if (urlObj.hostname.includes('github.com')) {
+          return 'active';
+        }
+        // 기타 URL도 일단 active로 간주
+        return 'active';
+      } catch {
+        return 'broken';
+      }
+    }
+
+    // 프로덕션 환경에서만 실제 네트워크 요청 수행
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
