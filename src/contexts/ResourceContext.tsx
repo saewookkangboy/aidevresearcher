@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus } from '../utils/types';
+import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
@@ -14,12 +14,15 @@ interface ResourceContextType {
   autoResearchStatus: AutoResearchStatus;
   linkHealthStatus: LinkHealthStatus;
   currentSearchQuery: SearchQuery;
+  activityLog: ActivityEvent[];
   
   // Actions
   addResource: (resource: Resource) => Promise<void>;
   updateResource: (id: string | number, updates: Partial<Resource>) => Promise<void>;
   deleteResource: (id: string | number) => Promise<void>;
   refreshResources: () => Promise<void>;
+  addActivity: (event: ActivityEvent) => void;
+  clearActivity: () => void;
   
   // Search & Filter
   searchResources: (query: SearchQuery) => void;
@@ -44,13 +47,16 @@ type ResourceAction =
   | { type: 'SET_FILTERED_RESOURCES'; payload: Resource[] }
   | { type: 'SET_SEARCH_QUERY'; payload: SearchQuery }
   | { type: 'UPDATE_AUTO_RESEARCH'; payload: Partial<AutoResearchStatus> }
-  | { type: 'UPDATE_LINK_HEALTH'; payload: LinkHealthStatus };
+  | { type: 'UPDATE_LINK_HEALTH'; payload: LinkHealthStatus }
+  | { type: 'ADD_ACTIVITY'; payload: ActivityEvent[] }
+  | { type: 'CLEAR_ACTIVITY' };
 
 const ResourceContext = createContext<ResourceContextType | undefined>(undefined);
 
 const storageService = new LocalStorageService();
 const linkHealthService = new LinkHealthService();
 const autoResearchSimulator = new AutoResearchSimulator();
+const ACTIVITY_STORAGE_KEY = 'vibe_coding_activity_log';
 
 // 필터링 로직을 재사용 가능한 함수로 추출
 function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
@@ -102,6 +108,7 @@ function resourceReducer(state: {
   currentSearchQuery: SearchQuery;
   autoResearchStatus: AutoResearchStatus;
   linkHealthStatus: LinkHealthStatus;
+  activityLog: ActivityEvent[];
 }, action: ResourceAction) {
   switch (action.type) {
     case 'SET_RESOURCES':
@@ -194,6 +201,10 @@ function resourceReducer(state: {
       };
     case 'UPDATE_LINK_HEALTH':
       return { ...state, linkHealthStatus: action.payload };
+    case 'ADD_ACTIVITY':
+      return { ...state, activityLog: action.payload };
+    case 'CLEAR_ACTIVITY':
+      return { ...state, activityLog: [] };
     default:
       return state;
   }
@@ -220,17 +231,31 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       broken: 0,
       fixed: 0,
     },
+    activityLog: [],
   });
 
   // 초기 로드
   useEffect(() => {
     loadResources();
+    loadActivityLog();
     
     // Auto Research 상태 업데이트 리스너
     autoResearchSimulator.start((status) => {
       dispatch({ type: 'UPDATE_AUTO_RESEARCH', payload: status });
     });
   }, []);
+
+  const loadActivityLog = () => {
+    try {
+      const stored = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+      if (stored) {
+        const parsed: ActivityEvent[] = JSON.parse(stored);
+        dispatch({ type: 'ADD_ACTIVITY', payload: parsed });
+      }
+    } catch (err) {
+      console.warn('활동 로그 로드 실패:', err);
+    }
+  };
 
   const loadResources = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -263,6 +288,25 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  const persistActivity = (events: ActivityEvent[]) => {
+    try {
+      localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(events.slice(-50)));
+    } catch (err) {
+      console.warn('활동 로그 저장 실패:', err);
+    }
+  };
+
+  const addActivity = (event: ActivityEvent) => {
+    const nextLog = [...state.activityLog, event].slice(-50);
+    dispatch({ type: 'ADD_ACTIVITY', payload: nextLog });
+    persistActivity(nextLog);
+  };
+
+  const clearActivity = () => {
+    dispatch({ type: 'CLEAR_ACTIVITY' });
+    persistActivity([]);
   };
 
 
@@ -378,6 +422,8 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
         checkAllLinks,
         startAutoResearch,
         stopAutoResearch,
+        addActivity,
+        clearActivity,
       }}
     >
       {children}
@@ -392,4 +438,3 @@ export function useResources() {
   }
   return context;
 }
-

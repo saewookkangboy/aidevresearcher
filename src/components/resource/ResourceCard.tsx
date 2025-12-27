@@ -58,7 +58,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
   const [editUrl, setEditUrl] = useState(resource.url);
   const [urlValidationStatus, setUrlValidationStatus] = useState<{ status: LinkStatus | 'validating'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  const { updateResource, checkLinkHealth } = useResources();
+  const { updateResource, checkLinkHealth, addActivity } = useResources();
   const linkHealthService = new LinkHealthService();
   const ingestionSimulator = new IngestionSimulator();
   const risk = detectDangerousCommand(resource.command || '');
@@ -81,6 +81,13 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
     await new Promise(resolve => setTimeout(resolve, 800));
     setRunState('done');
     setRunNote('모의 실행 완료! 터미널에서 그대로 사용할 수 있어요.');
+    addActivity({
+      id: `activity_${Date.now()}`,
+      type: 'run',
+      message: `명령 실행(모의): ${resource.command}`,
+      timestamp: new Date().toISOString(),
+      resourceId: resource.id,
+    });
     setTimeout(() => {
       setRunState('idle');
       setRunNote(null);

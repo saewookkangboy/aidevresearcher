@@ -1,0 +1,8 @@
+{
+  "agent_name": "my-agent",
+  "episodes": 100,
+  "total_reward": 5509.5694191785,
+  "average_reward": 55.09569419178499,
+  "best_score": 99.5641997316981,
+  "completed_at": "2025-12-27T05:56:40.150Z"
+}

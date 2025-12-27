@@ -3,12 +3,13 @@ import { Resource } from '../utils/types';
 import { IngestionSimulator } from '../services/simulation/ingestionSimulator';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { useResources } from '../contexts/ResourceContext';
+import { detectDangerousCommand } from '../utils/safety';
 
 export function useURLIngestion() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
-  const { addResource, updateResource } = useResources();
+  const { addResource, updateResource, addActivity } = useResources();
   const ingestionSimulator = new IngestionSimulator();
   const linkHealthService = new LinkHealthService();
 
@@ -20,6 +21,19 @@ export function useURLIngestion() {
     try {
       // 1. URL 분석 및 리소스 생성
       const resource = await ingestionSimulator.ingestURL(url);
+      const risk = detectDangerousCommand(resource.command || '');
+      if (risk.risky) {
+        const message = `위험 명령어가 포함되어 추가를 중단했습니다: ${risk.reasons.join(', ')}`;
+        setError(message);
+        addActivity({
+          id: `activity_${Date.now()}`,
+          type: 'ingest',
+          message,
+          timestamp: new Date().toISOString(),
+          resourceId: resource.id,
+        });
+        return null;
+      }
       
       // 2. 링크 상태 검증
       setValidating(true);
@@ -53,6 +67,13 @@ export function useURLIngestion() {
         }
       }
       
+      addActivity({
+        id: `activity_${Date.now()}`,
+        type: 'ingest',
+        message: `리소스 추가: ${resource.title}`,
+        timestamp: new Date().toISOString(),
+        resourceId: resource.id,
+      });
       return validatedResource;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to ingest URL';
@@ -66,4 +87,3 @@ export function useURLIngestion() {
 
   return { ingest, loading, error, validating };
 }
-

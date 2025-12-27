@@ -6,17 +6,20 @@ import { FilterPanel } from './components/search/FilterPanel';
 import { ResourceGrid } from './components/resource/ResourceGrid';
 import { URLInputForm } from './components/ingestion/URLInputForm';
 import { LinkHealthIndicator } from './components/status/LinkHealthIndicator';
+import { LiveOpsBar } from './components/status/LiveOpsBar';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { ErrorMessage } from './components/common/ErrorMessage';
 import { GoalPlanner } from './components/planner/GoalPlanner';
 import { WorkflowAgentPanel } from './components/workflow/WorkflowAgentPanel';
 import { OptimizationBatch } from './components/optimization/OptimizationBatch';
+import { RelatedResources } from './components/resource/RelatedResources';
+import { ActivityFeed } from './components/activity/ActivityFeed';
 import { useLinkHealth } from './hooks/useLinkHealth';
 import { useAutoResearch } from './hooks/useAutoResearch';
 import { LINK_HEALTH_CHECK_DELAY } from './utils/constants';
 
 function AppContent() {
-  const { filteredResources, loading, error, searchResources, clearSearch, linkHealthStatus } = useResources();
+  const { filteredResources, loading, error, searchResources, clearSearch, linkHealthStatus, refreshResources } = useResources();
   const { checkAll } = useLinkHealth();
   const { start } = useAutoResearch();
   const [dismissedError, setDismissedError] = useState(false);
@@ -63,6 +66,8 @@ function AppContent() {
           <LinkHealthIndicator status={linkHealthStatus} />
         </div>
 
+        <LiveOpsBar status={linkHealthStatus} onCheckAll={checkAll} onRefresh={refreshResources} />
+
         {/* Goal-based Planner */}
         <GoalPlanner />
 
@@ -96,10 +101,18 @@ function AppContent() {
           )}
         </div>
 
+        {/* Related Resources */}
+        {!loading && filteredResources.length > 1 && (
+          <RelatedResources resources={filteredResources} />
+        )}
+
         {/* URL Ingestion Form */}
         <div className="mb-8">
           <URLInputForm />
         </div>
+
+        {/* Activity Feed */}
+        <ActivityFeed />
       </main>
 
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6 mt-auto">
