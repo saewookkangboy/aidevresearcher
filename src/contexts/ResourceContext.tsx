@@ -372,27 +372,47 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     const resource = state.resources.find(r => r.id === id);
     if (!resource) return;
 
-    // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
-    const status = await linkHealthService.checkLink(resource.url);
-    
-    if (status === 'broken') {
-      const fixed = await linkHealthService.autoFixBrokenLink(resource);
-      // Frontend에는 최종 결과만 표시
-      await updateResource(id, fixed);
-    } else {
-      // Frontend에는 최종 결과만 표시
-      await updateResource(id, {
-        linkStatus: status,
-        lastCheckedAt: new Date().toISOString(),
-      });
+    try {
+      // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
+      const status = await linkHealthService.checkLink(resource.url);
+      
+      if (status === 'broken') {
+        const fixed = await linkHealthService.autoFixBrokenLink(resource);
+        // Frontend에는 최종 결과만 표시
+        await updateResource(id, fixed);
+      } else {
+        // Frontend에는 최종 결과만 표시
+        await updateResource(id, {
+          linkStatus: status,
+          lastCheckedAt: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      // 에러를 조용히 처리 (콘솔에 출력하지 않음)
+      // 링크 체크 실패는 broken으로 처리하지 않고 기존 상태 유지
     }
   };
 
   const checkAllLinks = async () => {
-    for (const resource of state.resources) {
-      await checkLinkHealth(resource.id);
-      // 각 링크 체크 사이에 약간의 지연 (Rate limit 방지)
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // 리소스가 많을 경우 rate limiting을 피하기 위해 배치 처리
+    const batchSize = 5;
+    const delayBetweenBatches = 2000; // 2초
+    const delayBetweenItems = 500; // 0.5초
+    
+    for (let i = 0; i < state.resources.length; i += batchSize) {
+      const batch = state.resources.slice(i, i + batchSize);
+      
+      // 배치 내에서 순차 처리
+      for (const resource of batch) {
+        await checkLinkHealth(resource.id);
+        // 각 링크 체크 사이에 지연 (Rate limit 방지)
+        await new Promise(resolve => setTimeout(resolve, delayBetweenItems));
+      }
+      
+      // 배치 사이에 더 긴 지연 (마지막 배치가 아니면)
+      if (i + batchSize < state.resources.length) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      }
     }
   };
 

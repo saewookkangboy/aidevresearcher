@@ -36,6 +36,9 @@ export class LinkHealthService {
         // HTTP 상태 코드 확인
         if (response.ok || response.status === 200 || response.status === 301 || response.status === 302) {
           return 'active';
+        } else if (response.status === 429) {
+          // Rate limit 오류는 조용히 처리하고 직접 요청으로 폴백
+          return await this.checkLinkDirect(url);
         } else if (response.status >= 400) {
           // 404, 403 등은 broken
           return 'broken';
@@ -50,11 +53,12 @@ export class LinkHealthService {
           return 'broken';
         }
         
-        // 프록시 실패 시 직접 요청 시도 (CORS 제한 있을 수 있음)
+        // 네트워크 오류나 CORS 오류는 조용히 처리하고 직접 요청으로 폴백
+        // 429 오류도 여기서 처리됨
         return await this.checkLinkDirect(url);
       }
     } catch (error) {
-      console.error('Link check failed:', error);
+      // 에러를 조용히 처리 (콘솔에 출력하지 않음)
       return 'broken';
     }
   }
@@ -82,6 +86,7 @@ export class LinkHealthService {
       clearTimeout(timeoutId);
       
       // 네트워크 오류나 타임아웃은 broken으로 처리
+      // 에러를 조용히 처리 (콘솔에 출력하지 않음)
       if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('Failed to fetch'))) {
         return 'broken';
       }
