@@ -120,13 +120,48 @@ export class LinkHealthService {
     // AI가 대체 가능한 최신 URL 찾기 시뮬레이션
     await this.simulateDelay(1000);
 
-    // GitHub 리포지토리인 경우 새 URL 생성 시뮬레이션
-    if (brokenUrl.includes('github.com')) {
-      const parts = brokenUrl.split('/');
-      if (parts.length >= 3) {
-        // 같은 리포지토리의 다른 브랜치나 새 URL 시뮬레이션
-        return `https://github.com/${parts[3]}/${parts[4]}`;
+    try {
+      const urlObj = new URL(brokenUrl);
+      
+      // GitHub URL 처리
+      if (urlObj.hostname.includes('github.com')) {
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+        
+        // 1. /tree/main/src/ 경로를 /tree/main/src/providers/로 수정
+        if (brokenUrl.includes('/tree/main/src/') && !brokenUrl.includes('/tree/main/src/providers/')) {
+          const fixedUrl = brokenUrl.replace('/tree/main/src/', '/tree/main/src/providers/');
+          return fixedUrl;
+        }
+        
+        // 2. /tree/main/src/providers/ 경로가 404인 경우 리포지토리 루트로 변경
+        if (brokenUrl.includes('/tree/main/src/providers/')) {
+          // 리포지토리 루트 URL 생성: https://github.com/owner/repo
+          if (pathParts.length >= 2) {
+            return `https://github.com/${pathParts[0]}/${pathParts[1]}`;
+          }
+        }
+        
+        // 3. 깊은 경로가 404인 경우 상위 경로로 시도
+        if (pathParts.length > 2) {
+          // 리포지토리 루트로 시도
+          return `https://github.com/${pathParts[0]}/${pathParts[1]}`;
+        }
+        
+        // 4. example.com 또는 잘못된 경로 처리
+        if (brokenUrl.includes('example.com') || brokenUrl.includes('example/')) {
+          return 'https://github.com/langchain-ai/langchain';
+        }
       }
+      
+      // 일반적인 URL 패턴 수정
+      // http:// -> https://
+      if (brokenUrl.startsWith('http://')) {
+        return brokenUrl.replace('http://', 'https://');
+      }
+      
+    } catch (error) {
+      // URL 파싱 실패 시 원본 반환하지 않음
+      return null;
     }
 
     // 대체 URL을 찾지 못한 경우
@@ -134,18 +169,29 @@ export class LinkHealthService {
   }
 
   async autoFixBrokenLink(resource: Resource): Promise<Resource> {
-    const alternativeUrl = await this.findAlternativeURL(resource.url);
+    // 여러 대체 URL 시도
+    const alternativeUrls = await this.findMultipleAlternatives(resource.url);
     
-    if (alternativeUrl) {
+    for (const alternativeUrl of alternativeUrls) {
+      if (!alternativeUrl) continue;
+      
       const newStatus = await this.checkLink(alternativeUrl);
       if (newStatus === 'active') {
-        return {
+        // 메타 정보도 업데이트
+        const fixedResource = {
           ...resource,
           url: alternativeUrl,
-          linkStatus: 'fixed',
+          linkStatus: 'fixed' as LinkStatus,
           updatedAt: new Date().toISOString(),
           lastCheckedAt: new Date().toISOString(),
         };
+        
+        // command도 URL과 일치하도록 수정
+        if (resource.command && resource.command.includes(resource.url)) {
+          fixedResource.command = resource.command.replace(resource.url, alternativeUrl);
+        }
+        
+        return fixedResource;
       }
     }
 
@@ -156,8 +202,57 @@ export class LinkHealthService {
     };
   }
 
+  private async findMultipleAlternatives(brokenUrl: string): Promise<string[]> {
+    const alternatives: string[] = [];
+    
+    try {
+      const urlObj = new URL(brokenUrl);
+      
+      if (urlObj.hostname.includes('github.com')) {
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+        
+        // 1. /tree/main/src/ -> /tree/main/src/providers/
+        if (brokenUrl.includes('/tree/main/src/') && !brokenUrl.includes('/tree/main/src/providers/')) {
+          alternatives.push(brokenUrl.replace('/tree/main/src/', '/tree/main/src/providers/'));
+        }
+        
+        // 2. 리포지토리 루트로 시도
+        if (pathParts.length >= 2) {
+          alternatives.push(`https://github.com/${pathParts[0]}/${pathParts[1]}`);
+        }
+        
+        // 3. /tree/main/ 제거하고 리포지토리 루트로
+        if (brokenUrl.includes('/tree/main/')) {
+          const repoRoot = `https://github.com/${pathParts[0]}/${pathParts[1]}`;
+          if (!alternatives.includes(repoRoot)) {
+            alternatives.push(repoRoot);
+          }
+        }
+        
+        // 4. /blob/ -> /tree/ 로 변경
+        if (brokenUrl.includes('/blob/')) {
+          alternatives.push(brokenUrl.replace('/blob/', '/tree/'));
+        }
+      }
+      
+      // 5. 기본 대체 URL 찾기
+      const basicAlternative = await this.findAlternativeURL(brokenUrl);
+      if (basicAlternative && !alternatives.includes(basicAlternative)) {
+        alternatives.push(basicAlternative);
+      }
+      
+    } catch (error) {
+      // URL 파싱 실패 시 기본 대체만 시도
+      const basicAlternative = await this.findAlternativeURL(brokenUrl);
+      if (basicAlternative) {
+        alternatives.push(basicAlternative);
+      }
+    }
+    
+    return alternatives;
+  }
+
   private async simulateDelay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-

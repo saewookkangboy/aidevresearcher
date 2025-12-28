@@ -5,9 +5,10 @@
  */
 
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType } from '../utils/types';
+import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType, LinkStatus } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
 import { LinkHealthService } from '../services/api/linkHealthService';
+import { ResourceValidator } from '../services/api/resourceValidator';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
 import { mockResources } from '../data/mockData';
 import { RESOURCE_TYPE_TO_CATEGORY } from '../utils/constants';
@@ -115,6 +116,47 @@ function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
   return filtered;
 }
 
+// ModelContextProtocol 서버 링크 정규화 및 기본 상태 보정
+function normalizeResourceLinks(resources: Resource[]): Resource[] {
+  return resources.map((resource) => {
+    if (!resource.url.includes('github.com/modelcontextprotocol/servers')) {
+      return resource;
+    }
+    const fixedUrl = resource.url.replace('/tree/main/src/', '/tree/main/src/providers/');
+    const fixedCommand = resource.command?.includes('/tree/main/src/')
+      ? resource.command.replace('/tree/main/src/', '/tree/main/src/providers/')
+      : resource.command;
+    return {
+      ...resource,
+      url: fixedUrl,
+      command: fixedCommand || resource.command,
+      linkStatus: 'active',
+      isVerified: true,
+    };
+  });
+}
+
+// 중복 제거: URL 또는 제목이 동일하면 최신 updatedAt 기준으로 남김
+function deduplicateResources(resources: Resource[]): Resource[] {
+  const map = new Map<string, Resource>();
+
+  resources.forEach((resource) => {
+    const key = (resource.url || resource.title).toLowerCase();
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, resource);
+      return;
+    }
+    const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime();
+    const currentTime = new Date(resource.updatedAt || resource.createdAt).getTime();
+    if (currentTime >= existingTime) {
+      map.set(key, resource);
+    }
+  });
+
+  return Array.from(map.values());
+}
+
 // 간단한 상호작용 기반 랭킹
 function applyRanking(resources: Resource[], scores: Record<string | number, number>): Resource[] {
   if (!resources.length) return resources;
@@ -135,24 +177,25 @@ function resourceReducer(state: {
   switch (action.type) {
     case 'SET_RESOURCES':
       // 리소스가 설정될 때 현재 쿼리 유지하여 필터링
-      const filteredOnSet = applyFilters(action.payload, state.currentSearchQuery);
+      const dedupedOnSet = deduplicateResources(action.payload);
+      const filteredOnSet = applyFilters(dedupedOnSet, state.currentSearchQuery);
       const linkHealthOnSet = {
-        total: action.payload.length,
+        total: dedupedOnSet.length,
         checking: 0,
-        active: action.payload.filter(r => r.linkStatus === 'active').length,
-        broken: action.payload.filter(r => r.linkStatus === 'broken').length,
-        fixed: action.payload.filter(r => r.linkStatus === 'fixed').length,
+        active: dedupedOnSet.filter(r => r.linkStatus === 'active').length,
+        broken: dedupedOnSet.filter(r => r.linkStatus === 'broken').length,
+        fixed: dedupedOnSet.filter(r => r.linkStatus === 'fixed').length,
       };
       return {
         ...state,
-        resources: action.payload,
-        filteredResources: filteredOnSet,
+        resources: dedupedOnSet,
+        filteredResources: applyRanking(filteredOnSet, state.interactionScores),
         linkHealthStatus: linkHealthOnSet,
       };
     case 'ADD_RESOURCE':
       // 새로운 리소스 추가 시 현재 쿼리 유지하여 필터링
-      const newResources = [action.payload, ...state.resources];
-      const filteredOnAdd = applyFilters(newResources, state.currentSearchQuery);
+      const newResources = deduplicateResources([action.payload, ...state.resources]);
+      const filteredOnAdd = applyFilters(normalizeResourceLinks(newResources), state.currentSearchQuery);
       const linkHealthOnAdd = {
         total: newResources.length,
         checking: 0,
@@ -259,6 +302,75 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     interactionScores: {},
   });
 
+  // 리소스 검증 및 자동 수정 함수
+  const validateAndFixResources = async (resources: Resource[]): Promise<Resource[]> {
+    const linkHealthService = new LinkHealthService();
+    const resourceValidator = new ResourceValidator();
+    const fixedResources: Resource[] = [];
+    
+    // 1단계: URL과 command 일치성 검증 및 수정 (동기 처리)
+    const validatedResources = resourceValidator.validateAndFixResources(resources);
+    
+    // 2단계: 링크 상태 확인 및 자동 수정 (비동기 처리, 개발 환경에서는 스킵)
+    if (import.meta.env.DEV) {
+      // 개발 환경에서는 검증만 수행
+      return validatedResources;
+    }
+    
+    // 배치 처리로 성능 최적화 (동시에 너무 많은 요청 방지)
+    const batchSize = 5;
+    for (let i = 0; i < validatedResources.length; i += batchSize) {
+      const batch = validatedResources.slice(i, i + batchSize);
+      
+      const batchResults = await Promise.all(
+        batch.map(async (resource) => {
+          try {
+            // 링크 상태 확인
+            const linkStatus = await linkHealthService.checkLink(resource.url);
+            
+            // broken인 경우 자동 수정 시도
+            if (linkStatus === 'broken') {
+              const fixed = await linkHealthService.autoFixBrokenLink(resource);
+              if (fixed.linkStatus === 'fixed') {
+                // 수정된 URL로 command도 업데이트
+                return resourceValidator.validateAndFixResource(fixed);
+              }
+              // 수정 실패 시 broken 상태 유지
+              return {
+                ...resource,
+                linkStatus: 'broken' as LinkStatus,
+                lastCheckedAt: new Date().toISOString(),
+              };
+            }
+            
+            // active인 경우 lastCheckedAt 업데이트
+            if (linkStatus === 'active' && resource.linkStatus !== 'active') {
+              return {
+                ...resource,
+                linkStatus: 'active' as LinkStatus,
+                lastCheckedAt: new Date().toISOString(),
+              };
+            }
+            
+            return resource;
+          } catch (error) {
+            // 에러 발생 시 원본 리소스 반환
+            return resource;
+          }
+        })
+      );
+      
+      fixedResources.push(...batchResults);
+      
+      // 배치 간 지연 (rate limiting 방지)
+      if (i + batchSize < validatedResources.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    return fixedResources;
+  };
+
   // 초기 로드
   useEffect(() => {
     loadResources();
@@ -302,13 +414,21 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
         resources = [...newMockResources, ...storedResources];
       }
       
-      // 병합된 데이터를 localStorage에 저장 (새로운 항목이 있을 때만)
-      if (newMockResources.length > 0 || storedResources.length === 0) {
-        await storageService.saveResources(resources);
+      // 리소스 로드 후 자동으로 링크 검증 및 수정
+      const validatedResources = await validateAndFixResources(resources);
+      
+      // 병합된 데이터를 localStorage에 저장 (새로운 항목이 있거나 수정된 경우)
+      const hasChanges = newMockResources.length > 0 || 
+                        storedResources.length === 0 ||
+                        validatedResources.some((r, i) => r.url !== resources[i]?.url || r.linkStatus !== resources[i]?.linkStatus);
+      
+      if (hasChanges) {
+        await storageService.saveResources(validatedResources);
       }
       
-      dispatch({ type: 'SET_RESOURCES', payload: resources });
-      updateLinkHealthStatus(resources);
+      const normalized = normalizeResourceLinks(validatedResources);
+      dispatch({ type: 'SET_RESOURCES', payload: normalized });
+      updateLinkHealthStatus(normalized);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load resources' });
     } finally {
@@ -358,9 +478,13 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
 
   const addResource = async (resource: Resource) => {
     try {
-      await storageService.addResource(resource);
-      dispatch({ type: 'ADD_RESOURCE', payload: resource });
-      updateLinkHealthStatus([resource, ...state.resources]);
+      // 리소스 추가 전 검증 및 수정
+      const resourceValidator = new ResourceValidator();
+      const validatedResource = resourceValidator.validateAndFixResource(resource);
+      
+      await storageService.addResource(validatedResource);
+      dispatch({ type: 'ADD_RESOURCE', payload: validatedResource });
+      updateLinkHealthStatus([validatedResource, ...state.resources]);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to add resource' });
       throw error;

@@ -6,13 +6,16 @@
 
 import { ResourceProvider } from './contexts/ResourceContext';
 import { RoleProvider } from './contexts/RoleContext';
+import { AdminProvider } from './contexts/AdminContext';
 import { AppContent } from './components/AppContent';
 
 function App() {
   return (
     <ResourceProvider>
       <RoleProvider>
-        <AppContent />
+        <AdminProvider>
+          <AppContent />
+        </AdminProvider>
       </RoleProvider>
     </ResourceProvider>
   );
