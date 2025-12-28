@@ -8,6 +8,7 @@ import { useState, useMemo } from 'react';
 import { Resource } from '../utils/types';
 import { IngestionSimulator } from '../services/simulation/ingestionSimulator';
 import { LinkHealthService } from '../services/api/linkHealthService';
+import { FeedParserService } from '../services/api/feedParserService';
 import { useResources } from '../contexts/ResourceContext';
 import { detectDangerousCommand } from '../utils/safety';
 
@@ -15,11 +16,13 @@ export function useURLIngestion() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
-  const { addResource, updateResource, addActivity } = useResources();
+  const [feedProgress, setFeedProgress] = useState<{ current: number; total: number } | null>(null);
+  const { addResource, addResources, updateResource, addActivity } = useResources();
   
   // 인스턴스를 메모이제이션하여 불필요한 재생성 방지
   const ingestionSimulator = useMemo(() => new IngestionSimulator(), []);
   const linkHealthService = useMemo(() => new LinkHealthService(), []);
+  const feedParserService = useMemo(() => new FeedParserService(), []);
 
   const ingest = async (url: string): Promise<Resource | null> => {
     setLoading(true);
@@ -98,5 +101,117 @@ export function useURLIngestion() {
     }
   };
 
-  return { ingest, loading, error, validating };
+  const ingestFeed = async (feedUrl: string): Promise<Resource[]> => {
+    setLoading(true);
+    setError(null);
+    setFeedProgress(null);
+
+    try {
+      // 1. Feed 파싱
+      const entries = await feedParserService.parseFeed(feedUrl);
+      
+      if (entries.length === 0) {
+        setError('Feed에서 리소스를 찾을 수 없습니다.');
+        return [];
+      }
+
+      // 2. 각 entry를 리소스로 변환
+      const resources: Resource[] = [];
+      let processed = 0;
+
+      for (const entry of entries) {
+        setFeedProgress({ current: processed, total: entries.length });
+        
+        try {
+          // GitHub URL만 처리
+          if (!entry.url.includes('github.com')) {
+            processed++;
+            continue;
+          }
+
+          // 리소스 생성
+          const resource = await ingestionSimulator.ingestURL(entry.url);
+          
+          // 위험한 명령어 체크
+          const risk = detectDangerousCommand(resource.command || '');
+          if (risk.risky) {
+            processed++;
+            continue; // 위험한 리소스는 건너뛰기
+          }
+
+          // Feed에서 가져온 정보로 메타데이터 보강
+          if (entry.description && entry.description.trim()) {
+            // Feed description이 더 상세한 경우 사용
+            if (!resource.description || resource.description === 'No description available' || entry.description.length > resource.description.length) {
+              resource.description = entry.description;
+            }
+          }
+          
+          // Feed 제목 처리 (더 자연스럽게 변환)
+          if (entry.title && entry.title.trim()) {
+            // 제목을 더 읽기 쉽게 변환 (예: "Cporter202 Awesome Ai Tools" -> "Awesome AI Tools")
+            const cleanedTitle = entry.title
+              .replace(/\b([a-z])([A-Z])/g, '$1 $2') // camelCase를 공백으로
+              .replace(/_/g, ' ') // 언더스코어를 공백으로
+              .replace(/\s+/g, ' ') // 여러 공백을 하나로
+              .trim();
+            
+            // GitHub 리포지토리 이름 추출 (owner/repo 형식)
+            const urlMatch = entry.url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+            if (urlMatch && cleanedTitle.toLowerCase().includes(urlMatch[2].toLowerCase())) {
+              // 제목이 리포지토리 이름을 포함하고 있으면 사용
+              resource.title = cleanedTitle;
+            } else if (!resource.title || resource.title === 'Untitled Resource') {
+              resource.title = cleanedTitle;
+            }
+          }
+
+          // 링크 상태 검증 (개발 환경에서는 스킵)
+          if (!import.meta.env.DEV) {
+            const linkStatus = await linkHealthService.checkLink(entry.url);
+            resource.linkStatus = linkStatus;
+            resource.lastCheckedAt = new Date().toISOString();
+          } else {
+            resource.linkStatus = 'active';
+          }
+
+          // source 정보 업데이트
+          resource.source = 'Repository Showcase Feed';
+          resource.sourceType = 'GITHUB';
+
+          resources.push(resource);
+        } catch (err) {
+          // 개별 리소스 생성 실패는 무시하고 계속 진행
+          console.warn(`Failed to process entry ${entry.url}:`, err);
+        } finally {
+          processed++;
+        }
+      }
+
+      // 3. 리소스 일괄 추가
+      if (resources.length > 0) {
+        await addResources(resources);
+        
+        addActivity({
+          id: `activity_${Date.now()}`,
+          type: 'ingest',
+          message: `Feed에서 ${resources.length}개의 리소스를 추가했습니다: ${feedUrl}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      setFeedProgress(null);
+      return resources;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to ingest feed';
+      setError(errorMessage);
+      setFeedProgress(null);
+      return [];
+    } finally {
+      setLoading(false);
+      setFeedProgress(null);
+    }
+  };
+
+  return { ingest, ingestFeed, loading, error, validating, feedProgress };
 }

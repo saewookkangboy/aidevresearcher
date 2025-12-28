@@ -9,7 +9,7 @@ import { useURLIngestion } from '../../hooks/useURLIngestion';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { SuccessMessage } from '../common/SuccessMessage';
-import { Plus, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, AlertCircle, Loader2, Rss } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
 import { extractKeywords, inferCategoryFromQuery, inferResourceTypeFromQuery } from '../../utils/nlpMatcher';
 import { LinkHealthService } from '../../services/api/linkHealthService';
@@ -23,7 +23,9 @@ export function URLInputForm() {
   const [stack, setStack] = useState('');
   const [intentSuccess, setIntentSuccess] = useState(false);
   const [urlValidationStatus, setUrlValidationStatus] = useState<{ status: LinkStatus | 'idle' | 'validating'; message: string } | null>(null);
-  const { ingest, loading, error, validating } = useURLIngestion();
+  const [feedUrl, setFeedUrl] = useState('https://tom-doerr.github.io/repo_posts/feed.xml');
+  const [feedSuccess, setFeedSuccess] = useState(false);
+  const { ingest, ingestFeed, loading, error, validating, feedProgress } = useURLIngestion();
   const { searchResources } = useResources();
   const linkHealthService = new LinkHealthService();
 
@@ -142,6 +144,20 @@ export function URLInputForm() {
 
     setIntentSuccess(true);
     setTimeout(() => setIntentSuccess(false), 3500);
+  };
+
+  const handleFeedSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFeedSuccess(false);
+    
+    if (!feedUrl.trim()) return;
+
+    const resources = await ingestFeed(feedUrl);
+    if (resources.length > 0) {
+      setFeedUrl('');
+      setFeedSuccess(true);
+      setTimeout(() => setFeedSuccess(false), 5000);
+    }
   };
 
   return (
@@ -310,6 +326,83 @@ export function URLInputForm() {
             <SuccessMessage
               message="도구가 성공적으로 추가되었습니다!"
               onDismiss={() => setSuccess(false)}
+            />
+          )}
+        </form>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Feed에서 도구 일괄 추가
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          RSS/Atom Feed URL을 입력하면 Feed에 포함된 GitHub 리포지토리를 자동으로 수집합니다.
+        </p>
+        <form onSubmit={handleFeedSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="feedUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Feed URL (RSS/Atom)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                id="feedUrl"
+                value={feedUrl}
+                onChange={(e) => setFeedUrl(e.target.value)}
+                placeholder="https://tom-doerr.github.io/repo_posts/feed.xml"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+                aria-label="Feed URL 입력"
+              />
+              <button
+                type="submit"
+                disabled={loading || !feedUrl.trim()}
+                className="px-6 py-2 bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span>
+                      {feedProgress 
+                        ? `처리 중... ${feedProgress.current}/${feedProgress.total}`
+                        : '분석 중...'
+                      }
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Rss className="w-5 h-5" />
+                    <span>Feed 수집</span>
+                  </>
+                )}
+              </button>
+            </div>
+            {feedProgress && (
+              <div className="mt-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(feedProgress.current / feedProgress.total) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {feedProgress.current} / {feedProgress.total} 리소스 처리 중...
+                </p>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <ErrorMessage
+              message={error}
+              variant="error"
+            />
+          )}
+
+          {feedSuccess && (
+            <SuccessMessage
+              message="Feed에서 도구가 성공적으로 추가되었습니다!"
+              onDismiss={() => setFeedSuccess(false)}
             />
           )}
         </form>

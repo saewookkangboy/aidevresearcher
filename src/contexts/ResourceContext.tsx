@@ -303,7 +303,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
   });
 
   // 리소스 검증 및 자동 수정 함수
-  const validateAndFixResources = async (resources: Resource[]): Promise<Resource[]> {
+  async function validateAndFixResources(resources: Resource[]): Promise<Resource[]> {
     const linkHealthService = new LinkHealthService();
     const resourceValidator = new ResourceValidator();
     const fixedResources: Resource[] = [];
