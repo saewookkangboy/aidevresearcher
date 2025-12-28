@@ -88,11 +88,11 @@ export function OnboardingGuide({ onClose, forceOpen }: OnboardingGuideProps = {
   const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-auto p-4 sm:p-6 animate-in fade-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 active:bg-gray-100 dark:active:bg-gray-700 rounded-lg transition-colors touch-manipulation"
           aria-label="닫기"
         >
           <X className="w-5 h-5" />
@@ -104,10 +104,10 @@ export function OnboardingGuide({ onClose, forceOpen }: OnboardingGuideProps = {
               {step.icon}
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 text-center mb-2">
             {step.title}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 text-center">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 text-center">
             {step.description}
           </p>
         </div>
@@ -127,32 +127,33 @@ export function OnboardingGuide({ onClose, forceOpen }: OnboardingGuideProps = {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           <button
             onClick={handlePrevious}
             disabled={currentStep === 0}
-            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-3 sm:px-4 py-2.5 sm:py-2 min-h-[44px] text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed active:bg-gray-100 dark:active:bg-gray-700 rounded-lg transition-colors touch-manipulation"
           >
             이전
           </button>
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            className="px-3 sm:px-4 py-2.5 sm:py-2 min-h-[44px] text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 active:bg-gray-100 dark:active:bg-gray-700 rounded-lg transition-colors touch-manipulation"
           >
             건너뛰기
           </button>
           <button
             onClick={handleNext}
-            className="px-6 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+            className="px-4 sm:px-6 py-2.5 sm:py-2 min-h-[44px] text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors flex items-center gap-2 touch-manipulation"
           >
             {isLastStep ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                시작하기
+                <span className="hidden sm:inline">시작하기</span>
+                <span className="sm:hidden">시작</span>
               </>
             ) : (
               <>
-                다음
+                <span>다음</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

@@ -12,7 +12,10 @@ export class LocalStorageService {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(resources));
     } catch (error) {
-      console.error('Failed to save resources:', error);
+      // 개발 환경에서만 에러 로그 출력
+      if (import.meta.env.DEV) {
+        console.error('Failed to save resources:', error);
+      }
       throw new Error('Storage quota exceeded. Please clear some data.');
     }
   }
@@ -22,7 +25,10 @@ export class LocalStorageService {
       const data = localStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Failed to load resources:', error);
+      // 개발 환경에서만 에러 로그 출력
+      if (import.meta.env.DEV) {
+        console.error('Failed to load resources:', error);
+      }
       return [];
     }
   }

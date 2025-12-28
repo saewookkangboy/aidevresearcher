@@ -4,7 +4,7 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Resource } from '../utils/types';
 import { IngestionSimulator } from '../services/simulation/ingestionSimulator';
 import { LinkHealthService } from '../services/api/linkHealthService';
@@ -16,8 +16,10 @@ export function useURLIngestion() {
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const { addResource, updateResource, addActivity } = useResources();
-  const ingestionSimulator = new IngestionSimulator();
-  const linkHealthService = new LinkHealthService();
+  
+  // 인스턴스를 메모이제이션하여 불필요한 재생성 방지
+  const ingestionSimulator = useMemo(() => new IngestionSimulator(), []);
+  const linkHealthService = useMemo(() => new LinkHealthService(), []);
 
   const ingest = async (url: string): Promise<Resource | null> => {
     setLoading(true);
@@ -71,7 +73,10 @@ export function useURLIngestion() {
           }
         } catch (fixError) {
           // 자동 수정 실패는 무시 (broken 상태 유지)
-          console.warn('Auto-fix failed:', fixError);
+          // 개발 환경에서만 경고 출력
+          if (import.meta.env.DEV) {
+            console.warn('Auto-fix failed:', fixError);
+          }
         }
       }
       

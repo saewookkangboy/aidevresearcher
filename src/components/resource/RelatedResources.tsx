@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { Resource } from '../../utils/types';
 import { ResourceCard } from './ResourceCard';
 import { LinkIcon } from 'lucide-react';
+import { RESOURCE_GRAPH } from '../../data/resourceGraph';
 
 interface RelatedResourcesProps {
   resources: Resource[];
@@ -25,15 +26,27 @@ function similarityScore(a: Resource, b: Resource): number {
 
 export function RelatedResources({ resources }: RelatedResourcesProps) {
   const related = useMemo(() => {
-    if (resources.length < 2) return null;
+    if (resources.length < 1) return null;
     const anchor = resources[0];
-    const scored = resources
-      .slice(1)
-      .map((r) => ({ resource: r, score: similarityScore(anchor, r) }))
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-    return { anchor, items: scored };
+    const graphLinks = RESOURCE_GRAPH[anchor.id] || [];
+
+    let items: { resource: Resource; score: number }[] = [];
+
+    if (graphLinks.length > 0) {
+      items = resources
+        .filter((r) => graphLinks.includes(r.id))
+        .map((r) => ({ resource: r, score: 10 }));
+    }
+
+    if (items.length === 0 && resources.length > 1) {
+      items = resources
+        .slice(1)
+        .map((r) => ({ resource: r, score: similarityScore(anchor, r) }))
+        .filter((item) => item.score > 0);
+    }
+
+    items = items.sort((a, b) => b.score - a.score).slice(0, 3);
+    return items.length ? { anchor, items } : null;
   }, [resources]);
 
   if (!related || related.items.length === 0) return null;

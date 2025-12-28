@@ -22,5 +22,18 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  
+  /* 터치 최적화 */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 모바일 스크롤 최적화 */
+  @media (max-width: 640px) {
+    html {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
 }
 

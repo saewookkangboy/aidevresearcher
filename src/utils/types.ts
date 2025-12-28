@@ -51,6 +51,12 @@ export interface Resource {
   source: string;
   sourceType: SourceType;
   linkStatus: LinkStatus;
+  meta?: {
+    title?: string;
+    statusCode?: number;
+    contentType?: string;
+    lastFetchedAt?: string;
+  };
   socialMetrics?: SocialMetrics;
   createdAt: string;
   updatedAt: string;
@@ -91,6 +97,8 @@ export interface ActivityEvent {
   timestamp: string;
   resourceId?: string | number;
 }
+
+export type InteractionType = 'copy' | 'run' | 'favorite';
 
 export interface RoleConfig {
   role: AgentRole;

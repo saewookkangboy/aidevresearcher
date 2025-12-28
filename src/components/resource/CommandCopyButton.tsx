@@ -10,18 +10,25 @@ import { Copy, Check } from 'lucide-react';
 interface CommandCopyButtonProps {
   command: string;
   className?: string;
+  onCopied?: () => void;
 }
 
-export function CommandCopyButton({ command, className = '' }: CommandCopyButtonProps) {
+export function CommandCopyButton({ command, className = '', onCopied }: CommandCopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(command);
       setCopied(true);
+      onCopied?.();
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      // 개발 환경에서만 에러 로그 출력
+      if (import.meta.env.DEV) {
+        console.error('Failed to copy:', error);
+      }
+      // 사용자에게 피드백 제공 (선택사항)
+      setCopied(false);
     }
   };
 

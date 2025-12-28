@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useURLIngestion } from '../useURLIngestion';
 import { detectDangerousCommand } from '../../utils/safety';
 // Mock dependencies with constructor-friendly fakes

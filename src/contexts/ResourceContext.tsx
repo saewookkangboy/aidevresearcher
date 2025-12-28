@@ -5,7 +5,7 @@
  */
 
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent } from '../utils/types';
+import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
@@ -21,14 +21,17 @@ interface ResourceContextType {
   linkHealthStatus: LinkHealthStatus;
   currentSearchQuery: SearchQuery;
   activityLog: ActivityEvent[];
+  interactionScores: Record<string | number, number>;
   
   // Actions
   addResource: (resource: Resource) => Promise<void>;
+  addResources: (resources: Resource[]) => Promise<void>;
   updateResource: (id: string | number, updates: Partial<Resource>) => Promise<void>;
   deleteResource: (id: string | number) => Promise<void>;
   refreshResources: () => Promise<void>;
   addActivity: (event: ActivityEvent) => void;
   clearActivity: () => void;
+  recordInteraction: (id: string | number, type: InteractionType) => void;
   
   // Search & Filter
   searchResources: (query: SearchQuery) => void;
@@ -55,7 +58,8 @@ type ResourceAction =
   | { type: 'UPDATE_AUTO_RESEARCH'; payload: Partial<AutoResearchStatus> }
   | { type: 'UPDATE_LINK_HEALTH'; payload: LinkHealthStatus }
   | { type: 'ADD_ACTIVITY'; payload: ActivityEvent[] }
-  | { type: 'CLEAR_ACTIVITY' };
+  | { type: 'CLEAR_ACTIVITY' }
+  | { type: 'SET_INTERACTIONS'; payload: Record<string | number, number> };
 
 const ResourceContext = createContext<ResourceContextType | undefined>(undefined);
 
@@ -63,6 +67,11 @@ const storageService = new LocalStorageService();
 const linkHealthService = new LinkHealthService();
 const autoResearchSimulator = new AutoResearchSimulator();
 const ACTIVITY_STORAGE_KEY = 'vibe_coding_activity_log';
+const BEHAVIOR_WEIGHTS: Record<InteractionType, number> = {
+  copy: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_COPY || 1),
+  run: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_RUN || 4),
+  favorite: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_FAVORITE || 2),
+};
 
 // 필터링 로직을 재사용 가능한 함수로 추출
 function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
@@ -106,6 +115,12 @@ function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
   return filtered;
 }
 
+// 간단한 상호작용 기반 랭킹
+function applyRanking(resources: Resource[], scores: Record<string | number, number>): Resource[] {
+  if (!resources.length) return resources;
+  return [...resources].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+}
+
 function resourceReducer(state: {
   resources: Resource[];
   filteredResources: Resource[];
@@ -115,6 +130,7 @@ function resourceReducer(state: {
   autoResearchStatus: AutoResearchStatus;
   linkHealthStatus: LinkHealthStatus;
   activityLog: ActivityEvent[];
+  interactionScores: Record<string | number, number>;
 }, action: ResourceAction) {
   switch (action.type) {
     case 'SET_RESOURCES':
@@ -147,7 +163,7 @@ function resourceReducer(state: {
       return {
         ...state,
         resources: newResources,
-        filteredResources: filteredOnAdd,
+        filteredResources: applyRanking(filteredOnAdd, state.interactionScores),
         linkHealthStatus: linkHealthOnAdd,
       };
     case 'UPDATE_RESOURCE':
@@ -166,7 +182,7 @@ function resourceReducer(state: {
       return {
         ...state,
         resources: updatedResources,
-        filteredResources: reFilteredResources,
+        filteredResources: applyRanking(reFilteredResources, state.interactionScores),
         linkHealthStatus: linkHealthOnUpdate,
       };
     case 'DELETE_RESOURCE':
@@ -183,7 +199,7 @@ function resourceReducer(state: {
       return {
         ...state,
         resources: resourcesAfterDelete,
-        filteredResources: filteredOnDelete,
+        filteredResources: applyRanking(filteredOnDelete, state.interactionScores),
         linkHealthStatus: linkHealthOnDelete,
       };
     case 'SET_LOADING':
@@ -198,7 +214,7 @@ function resourceReducer(state: {
       return { 
         ...state, 
         currentSearchQuery: action.payload,
-        filteredResources: filteredOnQueryChange,
+        filteredResources: applyRanking(filteredOnQueryChange, state.interactionScores),
       };
     case 'UPDATE_AUTO_RESEARCH':
       return {
@@ -211,6 +227,8 @@ function resourceReducer(state: {
       return { ...state, activityLog: action.payload };
     case 'CLEAR_ACTIVITY':
       return { ...state, activityLog: [] };
+    case 'SET_INTERACTIONS':
+      return { ...state, interactionScores: action.payload };
     default:
       return state;
   }
@@ -238,6 +256,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       fixed: 0,
     },
     activityLog: [],
+    interactionScores: {},
   });
 
   // 초기 로드
@@ -289,6 +308,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       }
       
       dispatch({ type: 'SET_RESOURCES', payload: resources });
+      updateLinkHealthStatus(resources);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load resources' });
     } finally {
@@ -296,11 +316,25 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateLinkHealthStatus = (resources: Resource[]) => {
+    const status: LinkHealthStatus = {
+      total: resources.length,
+      checking: resources.filter(r => r.linkStatus === 'checking').length,
+      active: resources.filter(r => r.linkStatus === 'active').length,
+      broken: resources.filter(r => r.linkStatus === 'broken').length,
+      fixed: resources.filter(r => r.linkStatus === 'fixed').length,
+    };
+    dispatch({ type: 'UPDATE_LINK_HEALTH', payload: status });
+  };
+
   const persistActivity = (events: ActivityEvent[]) => {
     try {
       localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(events.slice(-50)));
     } catch (err) {
-      console.warn('활동 로그 저장 실패:', err);
+      // 개발 환경에서만 경고 출력
+      if (import.meta.env.DEV) {
+        console.warn('활동 로그 저장 실패:', err);
+      }
     }
   };
 
@@ -315,14 +349,27 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     persistActivity([]);
   };
 
+  const recordInteraction = (id: string | number, type: InteractionType) => {
+    const next = { ...state.interactionScores };
+    next[id] = (next[id] || 0) + (BEHAVIOR_WEIGHTS[type] || 0);
+    dispatch({ type: 'SET_INTERACTIONS', payload: next });
+  };
+
 
   const addResource = async (resource: Resource) => {
     try {
       await storageService.addResource(resource);
       dispatch({ type: 'ADD_RESOURCE', payload: resource });
+      updateLinkHealthStatus([resource, ...state.resources]);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to add resource' });
       throw error;
+    }
+  };
+
+  const addResources = async (resources: Resource[]) => {
+    for (const res of resources) {
+      await addResource(res);
     }
   };
 
@@ -439,6 +486,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       value={{
         ...state,
         addResource,
+        addResources,
         updateResource,
         deleteResource,
         refreshResources,
@@ -450,6 +498,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
         stopAutoResearch,
         addActivity,
         clearActivity,
+        recordInteraction,
       }}
     >
       {children}

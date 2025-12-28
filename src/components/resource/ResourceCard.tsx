@@ -4,7 +4,7 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Resource, LinkStatus } from '../../utils/types';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_TO_CATEGORY, CATEGORY_LABELS, CATEGORY_ICONS } from '../../utils/constants';
 import { StatusBadge } from '../common/StatusBadge';
@@ -16,6 +16,7 @@ import { useResources } from '../../contexts/ResourceContext';
 import { LinkHealthService } from '../../services/api/linkHealthService';
 import { IngestionSimulator } from '../../services/simulation/ingestionSimulator';
 import { detectDangerousCommand, getVulnerabilityFindings } from '../../utils/safety';
+import { DevAgentExecutor } from '../../services/simulation/devAgentExecutor';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -64,11 +65,15 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
   const [editUrl, setEditUrl] = useState(resource.url);
   const [urlValidationStatus, setUrlValidationStatus] = useState<{ status: LinkStatus | 'validating'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  const { updateResource, checkLinkHealth, addActivity } = useResources();
-  const linkHealthService = new LinkHealthService();
-  const ingestionSimulator = new IngestionSimulator();
-  const risk = detectDangerousCommand(resource.command || '');
-  const vulnFindings = getVulnerabilityFindings(resource);
+  const { updateResource, checkLinkHealth, addActivity, recordInteraction } = useResources();
+  
+  // 인스턴스를 메모이제이션하여 불필요한 재생성 방지
+  const linkHealthService = useMemo(() => new LinkHealthService(), []);
+  const ingestionSimulator = useMemo(() => new IngestionSimulator(), []);
+  const executor = useMemo(() => new DevAgentExecutor(), []);
+  
+  const risk = useMemo(() => detectDangerousCommand(resource.command || ''), [resource.command]);
+  const vulnFindings = useMemo(() => getVulnerabilityFindings(resource), [resource]);
 
   const trustScore = getTrustScore(resource);
   const trustLabel = getTrustLabel(trustScore);
@@ -82,11 +87,9 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
     setRunState('running');
     setRunNote('명령을 준비하고 있어요...');
 
-    await new Promise(resolve => setTimeout(resolve, 600));
-    setRunNote(`실행 중: ${resource.command}`);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const output = await executor.execute(resource.command, { dryRun: true });
+    setRunNote(output);
     setRunState('done');
-    setRunNote('모의 실행 완료! 터미널에서 그대로 사용할 수 있어요.');
     addActivity({
       id: `activity_${Date.now()}`,
       type: 'run',
@@ -94,6 +97,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       timestamp: new Date().toISOString(),
       resourceId: resource.id,
     });
+    recordInteraction(resource.id, 'run');
     setTimeout(() => {
       setRunState('idle');
       setRunNote(null);
@@ -180,7 +184,10 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         try {
           metadataUpdates = await ingestionSimulator.updateMetadataForURL(editUrl, resource);
         } catch (metaError) {
-          console.warn('Metadata update failed, continuing with URL update:', metaError);
+          // 개발 환경에서만 경고 출력
+          if (import.meta.env.DEV) {
+            console.warn('Metadata update failed, continuing with URL update:', metaError);
+          }
         }
       }
       
@@ -196,21 +203,24 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       setIsEditingUrl(false);
       setUrlValidationStatus(null);
     } catch (error) {
-      console.error('Failed to update URL:', error);
+      // 개발 환경에서만 에러 로그 출력
+      if (import.meta.env.DEV) {
+        console.error('Failed to update URL:', error);
+      }
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow duration-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-shadow duration-200">
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2">
             {resource.title}
           </h3>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded">
               <span>{CATEGORY_ICONS[RESOURCE_TYPE_TO_CATEGORY[resource.type]]}</span>
               <span>{CATEGORY_LABELS[RESOURCE_TYPE_TO_CATEGORY[resource.type]]}</span>
@@ -222,27 +232,29 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
             <StatusBadge status={resource.linkStatus} />
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
           {resource.stars && (
-            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span>{formatNumber(resource.stars)}</span>
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
+              <span className="hidden sm:inline">{formatNumber(resource.stars)}</span>
+              <span className="sm:hidden">{formatNumber(resource.stars).length > 3 ? formatNumber(resource.stars).slice(0, -1) + 'k' : formatNumber(resource.stars)}</span>
             </div>
           )}
-          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded border ${trustLabel.className}`}>
-            {trustLabel.label} · {trustScore}점
+          <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border ${trustLabel.className}`}>
+            <span className="hidden sm:inline">{trustLabel.label} · {trustScore}점</span>
+            <span className="sm:hidden">{trustScore}</span>
           </span>
         </div>
       </div>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">
         {truncateText(resource.description, 120)}
       </p>
 
       {/* Platforms */}
       {resource.platforms.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2 sm:mb-3">
           {resource.platforms.map((platform) => (
             <span
               key={platform}
@@ -256,7 +268,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
 
       {/* Tags */}
       {resource.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-4">
+        <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 sm:mb-4">
           {resource.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
@@ -283,7 +295,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       )}
 
       {/* Metadata */}
-      <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">
         <div>
           <p className="font-medium text-gray-700 dark:text-gray-200">업데이트</p>
           <p>{formatDateLabel(resource.updatedAt || resource.createdAt)}</p>
@@ -292,17 +304,41 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
           <p className="font-medium text-gray-700 dark:text-gray-200">링크 체크</p>
           <p>{formatDateLabel(resource.lastCheckedAt)}</p>
         </div>
+        {resource.meta && (
+          <>
+            <div>
+              <p className="font-medium text-gray-700 dark:text-gray-200">스냅샷</p>
+              <p>{resource.meta.title || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700 dark:text-gray-200">상태/타입</p>
+              <p>{resource.meta.statusCode || 200} · {resource.meta.contentType || 'text/html'}</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Command */}
       {resource.command && (
         <div className="mb-4">
-          <CommandCopyButton command={resource.command} />
+          <CommandCopyButton command={resource.command} onCopied={() => recordInteraction(resource.id, 'copy')} />
+        </div>
+      )}
+
+      {/* Auto workflow suggestion */}
+      {resource.command && (
+        <div className="mb-4 p-2.5 sm:p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+          <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2">자동 워크플로우</p>
+          <ol className="list-decimal list-inside text-[10px] sm:text-xs text-gray-700 dark:text-gray-200 space-y-0.5 sm:space-y-1">
+            <li>설치: `{resource.command}` 실행</li>
+            <li>설정: 공식 문서/README 확인 ({resource.url})</li>
+            <li>검증: 링크 헬스 체크 후 샘플 명령 실행</li>
+          </ol>
         </div>
       )}
 
       {(risk.risky || vulnFindings.length > 0) && (
-        <div className="mb-4 p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-xs">
+        <div className="mb-4 p-2.5 sm:p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-[10px] sm:text-xs">
           <div className="flex items-center gap-2 font-semibold mb-1">
             <ShieldAlert className="w-4 h-4" />
             <span>안전 경고</span>
@@ -324,16 +360,16 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
 
       {/* Execution CTA */}
       {resource.command && (
-        <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">명령어 미리보기</p>
-              <p className="text-xs text-gray-600 dark:text-gray-300">터미널에 붙여넣기 전에 실행 흐름을 확인할 수 있습니다.</p>
+        <div className="mb-4 p-2.5 sm:p-3 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-100">명령어 미리보기</p>
+              <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300">터미널에 붙여넣기 전에 실행 흐름을 확인할 수 있습니다.</p>
             </div>
             <button
               onClick={handleRun}
               disabled={runState === 'running'}
-              className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="px-3 sm:px-4 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 active:bg-primary-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors touch-manipulation whitespace-nowrap"
             >
               {runState === 'running' ? '실행 중...' : '실행 시뮬레이션'}
             </button>
@@ -401,7 +437,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
                 <button
                   onClick={handleSaveUrl}
                   disabled={saving || editUrl === resource.url || urlValidationStatus?.status === 'validating'}
-                  className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  className="px-3 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 text-xs sm:text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 touch-manipulation"
                 >
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -412,7 +448,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
                 <button
                   onClick={handleCancelEdit}
                   disabled={saving}
-                  className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  className="px-3 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 text-xs sm:text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 active:bg-gray-400 dark:active:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 touch-manipulation"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -420,40 +456,41 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <a
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium min-h-[44px] sm:min-h-0 px-2 sm:px-0 touch-manipulation"
               >
                 <span>자세히 보기</span>
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </a>
               <button
                 onClick={handleEditUrl}
-                className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 min-h-[44px] sm:min-h-0 px-2 touch-manipulation"
                 title="URL 수정"
               >
                 <Edit2 className="w-3 h-3" />
-                <span>URL 수정</span>
+                <span className="hidden sm:inline">URL 수정</span>
               </button>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => checkLinkHealth(resource.id)}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 min-h-[44px] sm:min-h-0 px-2 touch-manipulation"
                 title="링크 상태 재확인"
               >
-                상태 확인
+                <span className="hidden sm:inline">상태 확인</span>
+                <span className="sm:hidden">확인</span>
               </button>
               {onViewDetails && (
                 <button
                   onClick={() => onViewDetails(resource)}
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 min-h-[44px] sm:min-h-0 px-2 touch-manipulation"
                 >
-                  상세 정보
+                  상세
                 </button>
               )}
             </div>

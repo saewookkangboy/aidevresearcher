@@ -20,15 +20,17 @@ export class IngestionSimulator {
 
     // 2. AI 분석
     const analysis = await this.aiService.analyzeURL(url);
+    const meta = this.generateMetaSnapshot(url);
+    const extraTags = this.extractTagsFromURL(url);
 
     // 3. Resource 객체 생성
     const resource: Resource = {
       id: `resource_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
       title: analysis.title || 'Untitled Resource',
       type: analysis.type || 'LIBRARY',
-      description: analysis.description || 'No description available',
+      description: analysis.description || meta.title || 'No description available',
       platforms: this.inferPlatforms(analysis.command || ''),
-      tags: this.generateTags(analysis),
+      tags: Array.from(new Set([...this.generateTags(analysis), ...extraTags])),
       command: analysis.command || '',
       url: url,
       stars: analysis.stars,
@@ -36,6 +38,7 @@ export class IngestionSimulator {
       source: analysis.source || 'User',
       sourceType: analysis.sourceType || 'USER',
       linkStatus: 'checking',
+      meta,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -107,6 +110,30 @@ export class IngestionSimulator {
     return tags;
   }
 
+  private extractTagsFromURL(url: string): string[] {
+    try {
+      const parsed = new URL(url);
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
+      const host = parsed.hostname.replace('www.', '');
+      const tags = [];
+      if (host) tags.push(host.split('.')[0]);
+      if (pathParts[0]) tags.push(pathParts[0]);
+      if (pathParts[1]) tags.push(pathParts[1]);
+      return tags.map(t => t.toLowerCase());
+    } catch {
+      return [];
+    }
+  }
+
+  private generateMetaSnapshot(url: string) {
+    return {
+      title: url.split('/').filter(Boolean).slice(-1)[0]?.replace(/-/g, ' ') || '리소스',
+      statusCode: 200,
+      contentType: 'text/html',
+      lastFetchedAt: new Date().toISOString(),
+    };
+  }
+
   async updateMetadataForURL(url: string, existingResource: Partial<Resource>): Promise<Partial<Resource>> {
     // URL 변경 시 메타 정보 다시 분석
     try {
@@ -127,9 +154,11 @@ export class IngestionSimulator {
         sourceType: analysis.sourceType || existingResource.sourceType,
       };
     } catch (error) {
-      console.error('Failed to update metadata:', error);
+      // 개발 환경에서만 에러 로그 출력
+      if (import.meta.env.DEV) {
+        console.error('Failed to update metadata:', error);
+      }
       return {};
     }
   }
 }
-
