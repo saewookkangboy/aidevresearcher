@@ -29,12 +29,14 @@ export const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   SKILLS: 'Skills',
   TOOLS: 'Tools',
   EXTENSION: 'Extension',
+  MCP: 'MCP',
 };
 
 export const CATEGORY_ICONS: Record<ResourceCategory, string> = {
   SKILLS: '🎯',
   TOOLS: '🛠️',
   EXTENSION: '🔌',
+  MCP: '🔗',
 };
 
 export const SOURCE_TYPE_LABELS: Record<string, string> = {

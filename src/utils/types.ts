@@ -12,7 +12,7 @@ export type ResourceType =
   | 'API' 
   | 'STARTER_KIT';
 
-export type ResourceCategory = 'SKILLS' | 'TOOLS' | 'EXTENSION';
+export type ResourceCategory = 'SKILLS' | 'TOOLS' | 'EXTENSION' | 'MCP';
 
 export type SourceType = 
   | 'GITHUB' 

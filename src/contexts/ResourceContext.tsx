@@ -4,14 +4,16 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
 import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType, LinkStatus } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { ResourceValidator } from '../services/api/resourceValidator';
+import { ExtensionLinkFixer } from '../services/api/extensionLinkFixer';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
 import { mockResources } from '../data/mockData';
 import { RESOURCE_TYPE_TO_CATEGORY } from '../utils/constants';
+import { searchResourcesByRelevance } from '../utils/semanticSearch';
 
 interface ResourceContextType {
   resources: Resource[];
@@ -78,14 +80,10 @@ const BEHAVIOR_WEIGHTS: Record<InteractionType, number> = {
 function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
   let filtered = [...resources];
 
-  // 텍스트 검색
+  // 텍스트 검색 - 의미 기반 검색 사용
   if (query.text) {
-    const lowerText = query.text.toLowerCase();
-    filtered = filtered.filter(r =>
-      r.title.toLowerCase().includes(lowerText) ||
-      r.description.toLowerCase().includes(lowerText) ||
-      r.tags.some(tag => tag.toLowerCase().includes(lowerText))
-    );
+    // 의미 기반 검색으로 관련도 높은 리소스만 필터링
+    filtered = searchResourcesByRelevance(filtered, query.text);
   }
 
   // 타입 필터
@@ -97,7 +95,35 @@ function applyFilters(resources: Resource[], query: SearchQuery): Resource[] {
   if (query.category !== undefined && query.category.length > 0) {
     filtered = filtered.filter(r => {
       const resourceCategory = RESOURCE_TYPE_TO_CATEGORY[r.type];
+      const hasMCPFilter = query.category!.includes('MCP');
+      const hasOtherCategoryFilter = query.category!.some(cat => cat !== 'MCP');
+      
+      // MCP 리소스 확인: 태그나 URL에 'mcp'가 포함된 경우
+      const isMCPResource = r.tags.some(tag => tag.toLowerCase().includes('mcp')) ||
+                           r.url.toLowerCase().includes('mcp');
+      
+      // MCP 필터가 선택된 경우
+      if (hasMCPFilter) {
+        if (isMCPResource) {
+          // MCP 리소스이고 다른 카테고리 필터가 없으면 통과
+          if (!hasOtherCategoryFilter) {
+            return true;
+          }
+          // 다른 카테고리 필터도 있으면 일반 카테고리도 확인
+          return query.category!.includes(resourceCategory);
+        }
+        // MCP 필터가 선택되었지만 이 리소스가 MCP가 아닌 경우
+        if (!hasOtherCategoryFilter) {
+          return false;
+        }
+      }
+      
+      // 일반 카테고리 필터 확인
+      if (hasOtherCategoryFilter) {
       return query.category!.includes(resourceCategory);
+      }
+      
+      return false;
     });
   }
 
@@ -122,10 +148,21 @@ function normalizeResourceLinks(resources: Resource[]): Resource[] {
     if (!resource.url.includes('github.com/modelcontextprotocol/servers')) {
       return resource;
     }
-    const fixedUrl = resource.url.replace('/tree/main/src/', '/tree/main/src/providers/');
-    const fixedCommand = resource.command?.includes('/tree/main/src/')
-      ? resource.command.replace('/tree/main/src/', '/tree/main/src/providers/')
-      : resource.command;
+    
+    // modelcontextprotocol/servers의 실제 구조: src/* 경로가 존재하지 않음
+    // 모든 경로를 리포지토리 루트로 변경 (404 방지)
+    let fixedUrl = 'https://github.com/modelcontextprotocol/servers';
+    let fixedCommand = resource.command;
+    
+    // command에서도 URL 추출하여 수정
+    if (fixedCommand && fixedCommand.includes('modelcontextprotocol/servers')) {
+      // command의 URL 부분을 리포지토리 루트로 변경
+      fixedCommand = fixedCommand.replace(
+        /https:\/\/github\.com\/modelcontextprotocol\/servers\/[^\s\)]+/g,
+        'https://github.com/modelcontextprotocol/servers'
+      );
+    }
+    
     return {
       ...resource,
       url: fixedUrl,
@@ -136,25 +173,45 @@ function normalizeResourceLinks(resources: Resource[]): Resource[] {
   });
 }
 
-// 중복 제거: URL 또는 제목이 동일하면 최신 updatedAt 기준으로 남김
+// 중복 제거: ID, URL 또는 제목이 동일하면 최신 updatedAt 기준으로 남김
 function deduplicateResources(resources: Resource[]): Resource[] {
-  const map = new Map<string, Resource>();
-
+  // 1단계: ID 기준으로 중복 제거 (가장 우선순위)
+  const idMap = new Map<string | number, Resource>();
   resources.forEach((resource) => {
-    const key = (resource.url || resource.title).toLowerCase();
-    const existing = map.get(key);
+    const existing = idMap.get(resource.id);
     if (!existing) {
-      map.set(key, resource);
+      idMap.set(resource.id, resource);
       return;
     }
     const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime();
     const currentTime = new Date(resource.updatedAt || resource.createdAt).getTime();
     if (currentTime >= existingTime) {
-      map.set(key, resource);
+      idMap.set(resource.id, resource);
     }
   });
 
-  return Array.from(map.values());
+  // 2단계: URL 또는 제목 기준으로 중복 제거 (같은 ID는 제외)
+  const urlMap = new Map<string, Resource>();
+  Array.from(idMap.values()).forEach((resource) => {
+    const key = (resource.url || resource.title).toLowerCase();
+    const existing = urlMap.get(key);
+    if (!existing) {
+      urlMap.set(key, resource);
+      return;
+    }
+    // 같은 ID인 경우는 중복으로 간주하지 않음 (URL 수정 시 사라지는 문제 방지)
+    if (existing.id === resource.id) {
+      urlMap.set(key, resource);
+      return;
+    }
+    const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime();
+    const currentTime = new Date(resource.updatedAt || resource.createdAt).getTime();
+    if (currentTime >= existingTime) {
+      urlMap.set(key, resource);
+    }
+  });
+
+  return Array.from(urlMap.values());
 }
 
 // 간단한 상호작용 기반 랭킹
@@ -213,18 +270,21 @@ function resourceReducer(state: {
       const updatedResources = state.resources.map((r: Resource) =>
         r.id === action.payload.id ? { ...r, ...action.payload.updates } : r
       );
+      // URL이 변경된 경우 normalizeResourceLinks 적용 (modelcontextprotocol/servers 특별 처리)
+      const normalizedUpdatedResources = normalizeResourceLinks(updatedResources);
       // 현재 검색 쿼리를 유지하면서 필터링 재적용
-      const reFilteredResources = applyFilters(updatedResources, state.currentSearchQuery);
+      // 업데이트된 리소스가 검색 쿼리와 맞지 않아도 리소스 목록에는 유지
+      const reFilteredResources = applyFilters(normalizedUpdatedResources, state.currentSearchQuery);
       const linkHealthOnUpdate = {
-        total: updatedResources.length,
+        total: normalizedUpdatedResources.length,
         checking: 0,
-        active: updatedResources.filter(r => r.linkStatus === 'active').length,
-        broken: updatedResources.filter(r => r.linkStatus === 'broken').length,
-        fixed: updatedResources.filter(r => r.linkStatus === 'fixed').length,
+        active: normalizedUpdatedResources.filter(r => r.linkStatus === 'active').length,
+        broken: normalizedUpdatedResources.filter(r => r.linkStatus === 'broken').length,
+        fixed: normalizedUpdatedResources.filter(r => r.linkStatus === 'fixed').length,
       };
       return {
         ...state,
-        resources: updatedResources,
+        resources: normalizedUpdatedResources,
         filteredResources: applyRanking(reFilteredResources, state.interactionScores),
         linkHealthStatus: linkHealthOnUpdate,
       };
@@ -306,10 +366,14 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
   async function validateAndFixResources(resources: Resource[]): Promise<Resource[]> {
     const linkHealthService = new LinkHealthService();
     const resourceValidator = new ResourceValidator();
+    const extensionLinkFixer = new ExtensionLinkFixer();
     const fixedResources: Resource[] = [];
     
-    // 1단계: URL과 command 일치성 검증 및 수정 (동기 처리)
-    const validatedResources = resourceValidator.validateAndFixResources(resources);
+    // 1단계: Extension 리소스 특별 처리
+    const extensionFixedResources = extensionLinkFixer.fixExtensionResources(resources);
+    
+    // 2단계: URL과 command 일치성 검증 및 수정 (동기 처리)
+    const validatedResources = resourceValidator.validateAndFixResources(extensionFixedResources);
     
     // 2단계: 링크 상태 확인 및 자동 수정 (비동기 처리, 개발 환경에서는 스킵)
     if (import.meta.env.DEV) {
@@ -469,11 +533,12 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     persistActivity([]);
   };
 
-  const recordInteraction = (id: string | number, type: InteractionType) => {
-    const next = { ...state.interactionScores };
+  const recordInteraction = useCallback((id: string | number, type: InteractionType) => {
+    const currentScores = state.interactionScores;
+    const next = { ...currentScores };
     next[id] = (next[id] || 0) + (BEHAVIOR_WEIGHTS[type] || 0);
     dispatch({ type: 'SET_INTERACTIONS', payload: next });
-  };
+  }, [state.interactionScores]);
 
 
   const addResource = async (resource: Resource) => {
@@ -499,8 +564,26 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
 
   const updateResource = async (id: string | number, updates: Partial<Resource>) => {
     try {
-      await storageService.updateResource(id, updates);
-      dispatch({ type: 'UPDATE_RESOURCE', payload: { id, updates } });
+      // URL이 변경되는 경우 ResourceValidator로 검증 및 정규화
+      let validatedUpdates = updates;
+      if (updates.url) {
+        const resourceValidator = new ResourceValidator();
+        const currentResource = state.resources.find(r => r.id === id);
+        if (currentResource) {
+          const tempResource = { ...currentResource, ...updates };
+          const validated = resourceValidator.validateAndFixResource(tempResource);
+          // 원본 리소스의 속성은 유지하고 URL과 command만 업데이트
+          validatedUpdates = {
+            ...updates,
+            url: validated.url,
+            command: validated.command || currentResource.command,
+          };
+        }
+      }
+      
+      await storageService.updateResource(id, validatedUpdates);
+      dispatch({ type: 'UPDATE_RESOURCE', payload: { id, updates: validatedUpdates } });
+      // 리소스 업데이트 후 전체 링크 상태 재계산은 reducer에서 자동으로 처리됨
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update resource' });
     }
@@ -544,19 +627,19 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     if (!resource) return;
 
     try {
-      // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
-      const status = await linkHealthService.checkLink(resource.url);
-      
-      if (status === 'broken') {
-        const fixed = await linkHealthService.autoFixBrokenLink(resource);
-        // Frontend에는 최종 결과만 표시
-        await updateResource(id, fixed);
-      } else {
-        // Frontend에는 최종 결과만 표시
-        await updateResource(id, {
-          linkStatus: status,
-          lastCheckedAt: new Date().toISOString(),
-        });
+    // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
+    const status = await linkHealthService.checkLink(resource.url);
+    
+    if (status === 'broken') {
+      const fixed = await linkHealthService.autoFixBrokenLink(resource);
+      // Frontend에는 최종 결과만 표시
+      await updateResource(id, fixed);
+    } else {
+      // Frontend에는 최종 결과만 표시
+      await updateResource(id, {
+        linkStatus: status,
+        lastCheckedAt: new Date().toISOString(),
+      });
       }
     } catch (error) {
       // 에러를 조용히 처리 (콘솔에 출력하지 않음)
@@ -575,7 +658,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       
       // 배치 내에서 순차 처리
       for (const resource of batch) {
-        await checkLinkHealth(resource.id);
+      await checkLinkHealth(resource.id);
         // 각 링크 체크 사이에 지연 (Rate limit 방지)
         await new Promise(resolve => setTimeout(resolve, delayBetweenItems));
       }
@@ -633,6 +716,48 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
 export function useResources() {
   const context = useContext(ResourceContext);
   if (context === undefined) {
+    // HMR 중 발생할 수 있는 오류를 방지하기 위해 개발 환경에서는 경고만 출력
+    if (import.meta.env.DEV) {
+      console.warn('useResources must be used within a ResourceProvider. This may be a HMR issue. Please refresh the page.');
+      // 개발 환경에서는 빈 컨텍스트를 반환하여 앱이 크래시되지 않도록 함
+      return {
+        resources: [],
+        filteredResources: [],
+        loading: false,
+        error: null,
+        currentSearchQuery: {},
+        autoResearchStatus: {
+          isActive: false,
+          platform: null,
+          lastScanTime: null,
+          currentQuery: null,
+          itemsFound: 0,
+        },
+        linkHealthStatus: {
+          total: 0,
+          checking: 0,
+          active: 0,
+          broken: 0,
+          fixed: 0,
+        },
+        activityLog: [],
+        interactionScores: {},
+        addResource: async () => {},
+        addResources: async () => {},
+        updateResource: async () => {},
+        deleteResource: async () => {},
+        refreshResources: async () => {},
+        searchResources: () => {},
+        clearSearch: () => {},
+        checkLinkHealth: async () => {},
+        checkAllLinks: async () => {},
+        startAutoResearch: () => {},
+        stopAutoResearch: () => {},
+        addActivity: () => {},
+        clearActivity: () => {},
+        recordInteraction: () => {},
+      } as ResourceContextType;
+    }
     throw new Error('useResources must be used within a ResourceProvider');
   }
   return context;

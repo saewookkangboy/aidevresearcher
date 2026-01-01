@@ -4,9 +4,10 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { AgentRole, RoleConfig, Resource, RoleRecommendation } from '../utils/types';
 import { ROLE_PREFERENCES, ROLE_LABELS, ROLE_ICONS } from '../utils/roleConfigs';
+import { rolePerformanceOptimizer } from '../services/optimization/rolePerformanceOptimizer';
 
 interface RoleContextType {
   currentRole: AgentRole;
@@ -101,6 +102,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       return;
     }
     
+    // Role 변경 시 이전 Role의 캐시는 유지 (다시 선택할 수 있으므로)
     const preferences = ROLE_PREFERENCES[role];
     const config: RoleConfig = {
       role,
@@ -119,6 +121,8 @@ export function RoleProvider({ children }: { children: ReactNode }) {
 
   const clearRole = async () => {
     localStorage.removeItem(ROLE_STORAGE_KEY);
+    // 캐시 무효화
+    rolePerformanceOptimizer.clearCache();
     dispatch({ type: 'CLEAR_ROLE' });
   };
 
@@ -138,82 +142,17 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ROLE_CONFIG', payload: updatedConfig });
   };
 
-  const getRecommendations = (resources: Resource[]): RoleRecommendation[] => {
+  const getRecommendations = useCallback((resources: Resource[]): RoleRecommendation[] => {
     if (!state.currentRole) {
       return [];
     }
 
-    const preferences = ROLE_PREFERENCES[state.currentRole];
-    const recommendations: RoleRecommendation[] = [];
-
-    resources.forEach((resource) => {
-      let score = 0;
-      const reasons: string[] = [];
-
-      // 플랫폼 매칭 점수
-      const platformMatch = resource.platforms.some(p =>
-        preferences.preferredPlatforms.some(pref => 
-          p.toLowerCase().includes(pref.toLowerCase()) || 
-          pref.toLowerCase().includes(p.toLowerCase())
-        )
-      );
-      if (platformMatch) {
-        score += 30;
-        reasons.push('플랫폼 일치');
-      }
-
-      // 타입 매칭 점수
-      if (preferences.preferredTypes.includes(resource.type)) {
-        score += 25;
-        reasons.push('타입 일치');
-      }
-
-      // 태그 매칭 점수
-      const tagMatches = resource.tags.filter(tag =>
-        preferences.preferredTags.some(prefTag =>
-          tag.toLowerCase().includes(prefTag.toLowerCase()) ||
-          prefTag.toLowerCase().includes(tag.toLowerCase())
-        )
-      );
-      if (tagMatches.length > 0) {
-        score += tagMatches.length * 10;
-        reasons.push(`${tagMatches.length}개 태그 일치`);
-      }
-
-      // 키워드 매칭 (제목, 설명)
-      const searchText = `${resource.title} ${resource.description}`.toLowerCase();
-      const keywordMatches = preferences.keywords.filter(keyword =>
-        searchText.includes(keyword.toLowerCase())
-      );
-      if (keywordMatches.length > 0) {
-        score += keywordMatches.length * 5;
-        reasons.push(`${keywordMatches.length}개 키워드 일치`);
-      }
-
-      // 검증된 리소스 보너스
-      if (resource.isVerified) {
-        score += 10;
-        reasons.push('검증된 리소스');
-      }
-
-      // 인기 리소스 보너스
-      if (resource.stars && resource.stars > 1000) {
-        score += 5;
-        reasons.push('인기 리소스');
-      }
-
-      if (score > 0) {
-        recommendations.push({
-          resource,
-          score,
-          reason: reasons.join(', '),
-        });
-      }
-    });
-
-    // 점수순으로 정렬
-    return recommendations.sort((a, b) => b.score - a.score);
-  };
+    // 최적화된 서비스를 사용하여 추천 계산 (캐싱 및 인덱싱 활용)
+    return rolePerformanceOptimizer.getOptimizedRecommendations(
+      state.currentRole,
+      resources
+    );
+  }, [state.currentRole]);
 
   return (
     <RoleContext.Provider

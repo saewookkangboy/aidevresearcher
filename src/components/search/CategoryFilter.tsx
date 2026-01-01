@@ -14,7 +14,7 @@ interface CategoryFilterProps {
   onClear: () => void;
 }
 
-const ALL_CATEGORIES: ResourceCategory[] = ['SKILLS', 'TOOLS', 'EXTENSION'];
+const ALL_CATEGORIES: ResourceCategory[] = ['SKILLS', 'TOOLS', 'EXTENSION', 'MCP'];
 
 export function CategoryFilter({ selectedCategories, onToggle, onClear }: CategoryFilterProps) {
   return (

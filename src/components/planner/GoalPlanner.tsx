@@ -4,11 +4,12 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useRole } from '../../contexts/RoleContext';
 import { useResources } from '../../contexts/ResourceContext';
 import { ROLE_LABELS, ROLE_ICONS } from '../../utils/roleConfigs';
 import { Target, ClipboardList, BadgeCheck } from 'lucide-react';
+import { Resource } from '../../utils/types';
 
 interface PlanStep {
   title: string;
@@ -55,8 +56,9 @@ const BASE_STEPS: Record<string, PlanStep[]> = {
 };
 
 export function GoalPlanner() {
-  const { currentRole } = useRole();
-  const { filteredResources } = useResources();
+  const { currentRole, getRecommendations } = useRole();
+  const { resources } = useResources();
+  const [topResources, setTopResources] = useState<Resource[]>([]);
 
   const steps = useMemo(() => {
     if (!currentRole || !BASE_STEPS[currentRole]) {
@@ -65,7 +67,20 @@ export function GoalPlanner() {
     return BASE_STEPS[currentRole];
   }, [currentRole]);
 
-  const topResources = filteredResources.slice(0, 3);
+  // 역할 기반 추천 도구 계산
+  useEffect(() => {
+    if (currentRole && resources.length > 0) {
+      const recommendations = getRecommendations(resources);
+      // 상위 3개 추천 도구 선택
+      const topRecs = recommendations
+        .slice(0, 3)
+        .map(rec => rec.resource);
+      setTopResources(topRecs);
+    } else {
+      // 역할이 없으면 일반 리소스 상위 3개
+      setTopResources(resources.slice(0, 3));
+    }
+  }, [currentRole, resources, getRecommendations]);
 
   return (
     <div className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

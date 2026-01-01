@@ -66,11 +66,19 @@ export class ResourceValidator {
       
       // GitHub URL 정규화
       if (urlObj.hostname.includes('github.com')) {
-        // /tree/main/src/ -> /tree/main/src/providers/ (MCP 서버의 경우)
-        if (url.includes('/tree/main/src/') && 
-            !url.includes('/tree/main/src/providers/') &&
-            url.includes('modelcontextprotocol/servers')) {
-          return url.replace('/tree/main/src/', '/tree/main/src/providers/');
+        // modelcontextprotocol/servers 특별 처리
+        // 실제 구조: src/* 경로가 존재하지 않음 (404 에러 메시지 확인)
+        // 모든 경로를 리포지토리 루트로 변경
+        if (url.includes('modelcontextprotocol/servers')) {
+          // 어떤 경로든 리포지토리 루트로 변경
+          return 'https://github.com/modelcontextprotocol/servers';
+        } else {
+          // 일반 MCP 서버: /tree/main/src/ -> /tree/main/src/providers/
+          if (url.includes('/tree/main/src/') && 
+              !url.includes('/tree/main/src/providers/') &&
+              (url.includes('mcp') || url.includes('modelcontextprotocol'))) {
+            return url.replace('/tree/main/src/', '/tree/main/src/providers/');
+          }
         }
         
         // http:// -> https://

@@ -127,7 +127,15 @@ export class LinkHealthService {
       if (urlObj.hostname.includes('github.com')) {
         const pathParts = urlObj.pathname.split('/').filter(Boolean);
         
-        // 1. /tree/main/src/ 경로를 /tree/main/src/providers/로 수정
+        // modelcontextprotocol/servers 특별 처리
+        // 실제 구조: src/* 경로가 존재하지 않음 (404 에러 메시지 확인)
+        // 모든 경로를 리포지토리 루트로 변경
+        if (brokenUrl.includes('modelcontextprotocol/servers')) {
+          // 어떤 경로든 리포지토리 루트로 리다이렉트
+          return 'https://github.com/modelcontextprotocol/servers';
+        }
+        
+        // 1. /tree/main/src/ 경로를 /tree/main/src/providers/로 수정 (일반 MCP 서버)
         if (brokenUrl.includes('/tree/main/src/') && !brokenUrl.includes('/tree/main/src/providers/')) {
           const fixedUrl = brokenUrl.replace('/tree/main/src/', '/tree/main/src/providers/');
           return fixedUrl;
@@ -170,7 +178,7 @@ export class LinkHealthService {
 
   async autoFixBrokenLink(resource: Resource): Promise<Resource> {
     // 여러 대체 URL 시도
-    const alternativeUrls = await this.findMultipleAlternatives(resource.url);
+    const alternativeUrls = await this.findMultipleAlternatives(resource.url, resource);
     
     for (const alternativeUrl of alternativeUrls) {
       if (!alternativeUrl) continue;
@@ -202,7 +210,7 @@ export class LinkHealthService {
     };
   }
 
-  private async findMultipleAlternatives(brokenUrl: string): Promise<string[]> {
+  private async findMultipleAlternatives(brokenUrl: string, resource?: Resource): Promise<string[]> {
     const alternatives: string[] = [];
     
     try {
@@ -211,31 +219,58 @@ export class LinkHealthService {
       if (urlObj.hostname.includes('github.com')) {
         const pathParts = urlObj.pathname.split('/').filter(Boolean);
         
-        // 1. /tree/main/src/ -> /tree/main/src/providers/
-        if (brokenUrl.includes('/tree/main/src/') && !brokenUrl.includes('/tree/main/src/providers/')) {
-          alternatives.push(brokenUrl.replace('/tree/main/src/', '/tree/main/src/providers/'));
-        }
-        
-        // 2. 리포지토리 루트로 시도
-        if (pathParts.length >= 2) {
-          alternatives.push(`https://github.com/${pathParts[0]}/${pathParts[1]}`);
-        }
-        
-        // 3. /tree/main/ 제거하고 리포지토리 루트로
-        if (brokenUrl.includes('/tree/main/')) {
-          const repoRoot = `https://github.com/${pathParts[0]}/${pathParts[1]}`;
-          if (!alternatives.includes(repoRoot)) {
-            alternatives.push(repoRoot);
+        // modelcontextprotocol/servers 특별 처리
+        // 실제 구조: src/* 경로가 존재하지 않음 (404 에러 메시지 확인)
+        // 모든 경로를 리포지토리 루트로 변경
+        if (brokenUrl.includes('modelcontextprotocol/servers')) {
+          // 어떤 경로든 리포지토리 루트로 리다이렉트
+          alternatives.push('https://github.com/modelcontextprotocol/servers');
+        } else {
+          // 일반 GitHub URL 처리
+          // 1. /tree/main/src/ -> /tree/main/src/providers/
+          if (brokenUrl.includes('/tree/main/src/') && !brokenUrl.includes('/tree/main/src/providers/')) {
+            alternatives.push(brokenUrl.replace('/tree/main/src/', '/tree/main/src/providers/'));
+          }
+          
+          // 2. 리포지토리 루트로 시도
+          if (pathParts.length >= 2) {
+            alternatives.push(`https://github.com/${pathParts[0]}/${pathParts[1]}`);
+          }
+          
+          // 3. /tree/main/ 제거하고 리포지토리 루트로
+          if (brokenUrl.includes('/tree/main/')) {
+            const repoRoot = `https://github.com/${pathParts[0]}/${pathParts[1]}`;
+            if (!alternatives.includes(repoRoot)) {
+              alternatives.push(repoRoot);
+            }
+          }
+          
+          // 4. /blob/ -> /tree/ 로 변경
+          if (brokenUrl.includes('/blob/')) {
+            alternatives.push(brokenUrl.replace('/blob/', '/tree/'));
           }
         }
         
-        // 4. /blob/ -> /tree/ 로 변경
-        if (brokenUrl.includes('/blob/')) {
-          alternatives.push(brokenUrl.replace('/blob/', '/tree/'));
+        // 5. Extension 리소스 특별 처리
+        if (resource && (resource.type === 'VSCODE_EXT' || resource.type === 'CLI_EXTENSION')) {
+          // command에서 URL 추출 시도
+          if (resource.command) {
+            const urlInCommand = resource.command.match(/https?:\/\/[^\s\)]+/)?.[0];
+            if (urlInCommand && urlInCommand !== brokenUrl && !alternatives.includes(urlInCommand)) {
+              alternatives.push(urlInCommand);
+            }
+          }
+          
+          // VS Code Extension의 경우 Marketplace URL 시도
+          if (resource.type === 'VSCODE_EXT' && pathParts.length >= 2) {
+            const repoName = pathParts[1];
+            const marketplaceUrl = `https://marketplace.visualstudio.com/items?itemName=${repoName}`;
+            alternatives.push(marketplaceUrl);
+          }
         }
       }
       
-      // 5. 기본 대체 URL 찾기
+      // 6. 기본 대체 URL 찾기
       const basicAlternative = await this.findAlternativeURL(brokenUrl);
       if (basicAlternative && !alternatives.includes(basicAlternative)) {
         alternatives.push(basicAlternative);

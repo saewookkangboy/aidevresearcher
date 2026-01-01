@@ -76,7 +76,8 @@ export function AppContent() {
 
     // Auto Research 시작
     start();
-  }, [checkAll, start]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 초기 마운트 시에만 실행
 
   // 에러가 변경되면 dismissed 상태 초기화
   useEffect(() => {

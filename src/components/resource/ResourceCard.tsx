@@ -77,6 +77,13 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
 
   const trustScore = getTrustScore(resource);
   const trustLabel = getTrustLabel(trustScore);
+  
+  // MCP 리소스 확인 (태그나 URL에 'mcp' 포함)
+  const isMCPResource = useMemo(() => {
+    const hasMCPTag = resource.tags.some(tag => tag.toLowerCase().includes('mcp'));
+    const hasMCPUrl = resource.url.toLowerCase().includes('mcp');
+    return hasMCPTag || hasMCPUrl;
+  }, [resource.tags, resource.url]);
 
   const handleRun = async () => {
     if (!resource.command) return;
@@ -225,6 +232,12 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
               <span>{CATEGORY_ICONS[RESOURCE_TYPE_TO_CATEGORY[resource.type]]}</span>
               <span>{CATEGORY_LABELS[RESOURCE_TYPE_TO_CATEGORY[resource.type]]}</span>
             </span>
+            {isMCPResource && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded border border-purple-200 dark:border-purple-700">
+                <span>🔗</span>
+                <span>MCP</span>
+              </span>
+            )}
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
               {RESOURCE_TYPE_LABELS[resource.type]}
             </span>
@@ -329,9 +342,9 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       {resource.command && (
         <div className="mb-4 p-2.5 sm:p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
           <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2">자동 워크플로우</p>
-          <ol className="list-decimal list-inside text-[10px] sm:text-xs text-gray-700 dark:text-gray-200 space-y-0.5 sm:space-y-1">
-            <li>설치: `{resource.command}` 실행</li>
-            <li>설정: 공식 문서/README 확인 ({resource.url})</li>
+          <ol className="list-decimal list-inside text-[10px] sm:text-xs text-gray-700 dark:text-gray-200 space-y-0.5 sm:space-y-1 break-words overflow-wrap-anywhere">
+            <li className="break-words overflow-wrap-anywhere">설치: <code className="break-all">{resource.command}</code> 실행</li>
+            <li className="break-words overflow-wrap-anywhere">설정: 공식 문서/README 확인 (<a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline break-all">{resource.url}</a>)</li>
             <li>검증: 링크 헬스 체크 후 샘플 명령 실행</li>
           </ol>
         </div>
@@ -462,9 +475,58 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  
+                  // 링크 상태 재측정
+                  try {
+                    const currentStatus = await linkHealthService.checkLink(resource.url);
+                    
+                    // 상태가 변경된 경우 업데이트
+                    if (currentStatus !== resource.linkStatus) {
+                      await updateResource(resource.id, {
+                        linkStatus: currentStatus,
+                        lastCheckedAt: new Date().toISOString(),
+                      });
+                    }
+                    
+                    // broken 링크인 경우 자동 수정 시도
+                    if (currentStatus === 'broken') {
+                      try {
+                        const fixed = await linkHealthService.autoFixBrokenLink(resource);
+                        if (fixed.linkStatus === 'fixed') {
+                          await updateResource(resource.id, {
+                            url: fixed.url,
+                            linkStatus: fixed.linkStatus,
+                            lastCheckedAt: fixed.lastCheckedAt,
+                          });
+                          // 수정된 URL로 새 창 열기
+                          window.open(fixed.url, '_blank', 'noopener,noreferrer');
+                          return;
+                        }
+                      } catch (fixError) {
+                        // 자동 수정 실패 시 원본 URL로 시도
+                        console.warn('Auto-fix failed:', fixError);
+                      }
+                    }
+                    
+                    // 정상 링크이거나 수정 실패한 경우 원본 URL로 열기
+                    window.open(resource.url, '_blank', 'noopener,noreferrer');
+                  } catch (error) {
+                    // 오류 발생 시 원본 URL로 시도
+                    console.warn('Link check failed:', error);
+                    window.open(resource.url, '_blank', 'noopener,noreferrer');
+                  }
+                }}
                 className="inline-flex items-center gap-1 text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium min-h-[44px] sm:min-h-0 px-2 sm:px-0 touch-manipulation"
               >
                 <span>자세히 보기</span>
+                {isMCPResource && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700">
+                    <span>🔗</span>
+                    <span>MCP</span>
+                  </span>
+                )}
                 <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </a>
               <button
