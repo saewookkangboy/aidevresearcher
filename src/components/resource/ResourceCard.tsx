@@ -185,17 +185,41 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         linkStatus = await linkHealthService.checkLink(editUrl);
       }
       
-      // URL이 변경되었고 active 상태인 경우 메타 정보 업데이트
+      // URL이 변경되었거나 active 상태인 경우 메타 정보 업데이트
       let metadataUpdates: Partial<Resource> = {};
-      if (editUrl !== resource.url && linkStatus === 'active') {
+      if (editUrl !== resource.url || linkStatus === 'active') {
         try {
-          metadataUpdates = await ingestionSimulator.updateMetadataForURL(editUrl, resource);
+          // URL이 변경된 경우 또는 active 상태인 경우 메타 정보 업데이트
+          const updatedMeta = await ingestionSimulator.updateMetadataForURL(editUrl, resource);
+          metadataUpdates = {
+            ...updatedMeta,
+            // 메타 정보가 업데이트된 경우 lastFetchedAt 갱신
+            meta: updatedMeta.meta ? {
+              ...updatedMeta.meta,
+              lastFetchedAt: new Date().toISOString(),
+            } : resource.meta,
+          };
         } catch (metaError) {
           // 개발 환경에서만 경고 출력
           if (import.meta.env.DEV) {
             console.warn('Metadata update failed, continuing with URL update:', metaError);
           }
+          // 실패 시 기본 메타 정보만 업데이트
+          metadataUpdates = {
+            meta: {
+              ...resource.meta,
+              lastFetchedAt: new Date().toISOString(),
+            },
+          };
         }
+      } else {
+        // 링크 상태만 변경된 경우 메타 정보의 lastFetchedAt만 업데이트
+        metadataUpdates = {
+          meta: {
+            ...resource.meta,
+            lastFetchedAt: new Date().toISOString(),
+          },
+        };
       }
       
       // 리소스 업데이트 (URL, 링크 상태, 메타 정보)

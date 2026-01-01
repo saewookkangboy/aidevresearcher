@@ -4,7 +4,7 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useRole } from '../../contexts/RoleContext';
 import { useResources } from '../../contexts/ResourceContext';
 import { ROLE_LABELS, ROLE_ICONS } from '../../utils/roleConfigs';
@@ -58,7 +58,6 @@ const BASE_STEPS: Record<string, PlanStep[]> = {
 export function GoalPlanner() {
   const { currentRole, getRecommendations } = useRole();
   const { resources } = useResources();
-  const [topResources, setTopResources] = useState<Resource[]>([]);
 
   const steps = useMemo(() => {
     if (!currentRole || !BASE_STEPS[currentRole]) {
@@ -67,20 +66,24 @@ export function GoalPlanner() {
     return BASE_STEPS[currentRole];
   }, [currentRole]);
 
-  // 역할 기반 추천 도구 계산
-  useEffect(() => {
+  // 역할 기반 추천 도구 계산 (useMemo로 메모이제이션하여 무한 루프 방지)
+  // resources 배열의 참조가 변경되어도 실제 내용이 같으면 재계산하지 않도록 resources의 ID 목록 사용
+  const resourcesIds = useMemo(() => resources.map(r => r.id).join(','), [resources]);
+  const topResources = useMemo(() => {
     if (currentRole && resources.length > 0) {
       const recommendations = getRecommendations(resources);
       // 상위 3개 추천 도구 선택
-      const topRecs = recommendations
+      return recommendations
         .slice(0, 3)
         .map(rec => rec.resource);
-      setTopResources(topRecs);
     } else {
       // 역할이 없으면 일반 리소스 상위 3개
-      setTopResources(resources.slice(0, 3));
+      return resources.slice(0, 3);
     }
-  }, [currentRole, resources, getRecommendations]);
+    // getRecommendations는 useCallback으로 메모이제이션되어 있지만, 
+    // dependency에서 제외하여 resourcesIds와 currentRole만으로 재계산 제어
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRole, resourcesIds, resources.length]);
 
   return (
     <div className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

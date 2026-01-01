@@ -11,6 +11,7 @@ import { LinkHealthService } from '../services/api/linkHealthService';
 import { ResourceValidator } from '../services/api/resourceValidator';
 import { ExtensionLinkFixer } from '../services/api/extensionLinkFixer';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
+import { IngestionSimulator } from '../services/simulation/ingestionSimulator';
 import { DatabaseService } from '../services/database/databaseService';
 import { ReinforcementLearningService } from '../services/ai/reinforcementLearningService';
 import { mockResources } from '../data/mockData';
@@ -732,19 +733,51 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     if (!resource) return;
 
     try {
-    // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
-    const status = await linkHealthService.checkLink(resource.url);
-    
-    if (status === 'broken') {
-      const fixed = await linkHealthService.autoFixBrokenLink(resource);
-      // Frontend에는 최종 결과만 표시
-      await updateResource(id, fixed);
-    } else {
-      // Frontend에는 최종 결과만 표시
-      await updateResource(id, {
-        linkStatus: status,
-        lastCheckedAt: new Date().toISOString(),
-      });
+      // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
+      const status = await linkHealthService.checkLink(resource.url);
+      
+      // 메타 정보 업데이트 (링크 상태 확인 시)
+      const ingestionSimulator = new IngestionSimulator();
+      let metadataUpdates: Partial<Resource> = {};
+      
+      if (status === 'active') {
+        try {
+          const updatedMeta = await ingestionSimulator.updateMetadataForURL(resource.url, resource);
+          metadataUpdates = {
+            ...updatedMeta,
+            meta: updatedMeta.meta ? {
+              ...updatedMeta.meta,
+              lastFetchedAt: new Date().toISOString(),
+            } : resource.meta,
+          };
+        } catch (metaError) {
+          // 메타 정보 업데이트 실패 시 기본 정보만 업데이트
+          if (import.meta.env.DEV) {
+            console.warn('Metadata update failed during link check:', metaError);
+          }
+          metadataUpdates = {
+            meta: {
+              ...resource.meta,
+              lastFetchedAt: new Date().toISOString(),
+            },
+          };
+        }
+      }
+      
+      if (status === 'broken') {
+        const fixed = await linkHealthService.autoFixBrokenLink(resource);
+        // Frontend에는 최종 결과만 표시
+        await updateResource(id, {
+          ...fixed,
+          ...metadataUpdates,
+        });
+      } else {
+        // Frontend에는 최종 결과만 표시
+        await updateResource(id, {
+          ...metadataUpdates,
+          linkStatus: status,
+          lastCheckedAt: new Date().toISOString(),
+        });
       }
     } catch (error) {
       // 에러를 조용히 처리 (콘솔에 출력하지 않음)

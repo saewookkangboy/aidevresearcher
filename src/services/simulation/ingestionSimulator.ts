@@ -140,25 +140,40 @@ export class IngestionSimulator {
       this.validateURL(url);
 
       const analysis = await this.aiService.analyzeURL(url);
+      const meta = this.generateMetaSnapshot(url);
+      const extraTags = this.extractTagsFromURL(url);
+      const generatedTags = this.generateTags(analysis);
       
       return {
         title: analysis.title || existingResource.title,
         type: analysis.type || existingResource.type,
         description: analysis.description || existingResource.description,
         platforms: analysis.command ? this.inferPlatforms(analysis.command) : existingResource.platforms,
-        tags: this.generateTags(analysis),
+        tags: Array.from(new Set([...generatedTags, ...extraTags])),
         command: analysis.command || existingResource.command,
         stars: analysis.stars ?? existingResource.stars,
         isVerified: analysis.isVerified ?? existingResource.isVerified,
         source: analysis.source || existingResource.source,
         sourceType: analysis.sourceType || existingResource.sourceType,
+        meta: {
+          ...existingResource.meta,
+          ...meta,
+          // AI 분석 결과가 있으면 메타 정보 업데이트
+          title: analysis.title || meta.title || existingResource.meta?.title,
+        },
       };
     } catch (error) {
       // 개발 환경에서만 에러 로그 출력
       if (import.meta.env.DEV) {
         console.error('Failed to update metadata:', error);
       }
-      return {};
+      // 실패 시 기존 메타 정보는 유지하고 기본 메타 정보만 업데이트
+      return {
+        meta: {
+          ...existingResource.meta,
+          ...this.generateMetaSnapshot(url),
+        },
+      };
     }
   }
 }
