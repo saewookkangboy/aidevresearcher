@@ -245,7 +245,11 @@ export class ReinforcementLearningService {
    * Q-learning 업데이트
    */
   private updateQValue(state: RLState, action: RLAction, reward: RLReward) {
-    const stateKey = this.getStateKey(state, action);
+    // action에서 resource 찾기
+    const resource = state.resources.find(r => r.id === action.resourceId);
+    if (!resource) return;
+
+    const stateKey = this.getStateKey(state, resource);
     const learningRate = 0.1;
     const discountFactor = 0.9;
 

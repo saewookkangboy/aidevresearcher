@@ -4,13 +4,15 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType, LinkStatus } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { ResourceValidator } from '../services/api/resourceValidator';
 import { ExtensionLinkFixer } from '../services/api/extensionLinkFixer';
 import { AutoResearchSimulator } from '../services/simulation/autoResearchSimulator';
+import { DatabaseService } from '../services/database/databaseService';
+import { ReinforcementLearningService } from '../services/ai/reinforcementLearningService';
 import { mockResources } from '../data/mockData';
 import { RESOURCE_TYPE_TO_CATEGORY } from '../utils/constants';
 import { searchResourcesByRelevance } from '../utils/semanticSearch';
@@ -69,11 +71,22 @@ const ResourceContext = createContext<ResourceContextType | undefined>(undefined
 const storageService = new LocalStorageService();
 const linkHealthService = new LinkHealthService();
 const autoResearchSimulator = new AutoResearchSimulator();
+const dbService = new DatabaseService();
 const ACTIVITY_STORAGE_KEY = 'vibe_coding_activity_log';
 const BEHAVIOR_WEIGHTS: Record<InteractionType, number> = {
   copy: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_COPY || 1),
   run: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_RUN || 4),
   favorite: Number(import.meta.env.VITE_BEHAVIOR_WEIGHT_FAVORITE || 2),
+};
+
+// 세션 ID 생성 (사용자 추적용)
+const getSessionId = (): string => {
+  let sessionId = sessionStorage.getItem('session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem('session_id', sessionId);
+  }
+  return sessionId;
 };
 
 // 필터링 로직을 재사용 가능한 함수로 추출
@@ -362,6 +375,10 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     interactionScores: {},
   });
 
+  // 강화학습 서비스 인스턴스 (메모이제이션)
+  const rlService = useMemo(() => new ReinforcementLearningService(), []);
+  const sessionId = useMemo(() => getSessionId(), []);
+
   // 리소스 검증 및 자동 수정 함수
   async function validateAndFixResources(resources: Resource[]): Promise<Resource[]> {
     const linkHealthService = new LinkHealthService();
@@ -550,6 +567,27 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       await storageService.addResource(validatedResource);
       dispatch({ type: 'ADD_RESOURCE', payload: validatedResource });
       updateLinkHealthStatus([validatedResource, ...state.resources]);
+
+      // DB에 리소스 이력 기록
+      try {
+        await dbService.recordResourceHistory({
+          resourceId: validatedResource.id,
+          action: 'created',
+          source: validatedResource.sourceType === 'USER' ? 'user' : 'auto-research',
+          changes: {
+            after: validatedResource,
+          },
+          metadata: {
+            title: validatedResource.title,
+            type: validatedResource.type,
+            url: validatedResource.url,
+          },
+        });
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('Failed to record resource history:', error);
+        }
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to add resource' });
       throw error;
@@ -564,26 +602,46 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
 
   const updateResource = async (id: string | number, updates: Partial<Resource>) => {
     try {
+      const currentResource = state.resources.find(r => r.id === id);
+      if (!currentResource) return;
+
       // URL이 변경되는 경우 ResourceValidator로 검증 및 정규화
       let validatedUpdates = updates;
       if (updates.url) {
         const resourceValidator = new ResourceValidator();
-        const currentResource = state.resources.find(r => r.id === id);
-        if (currentResource) {
-          const tempResource = { ...currentResource, ...updates };
-          const validated = resourceValidator.validateAndFixResource(tempResource);
-          // 원본 리소스의 속성은 유지하고 URL과 command만 업데이트
-          validatedUpdates = {
-            ...updates,
-            url: validated.url,
-            command: validated.command || currentResource.command,
-          };
-        }
+        const tempResource = { ...currentResource, ...updates };
+        const validated = resourceValidator.validateAndFixResource(tempResource);
+        // 원본 리소스의 속성은 유지하고 URL과 command만 업데이트
+        validatedUpdates = {
+          ...updates,
+          url: validated.url,
+          command: validated.command || currentResource.command,
+        };
       }
       
       await storageService.updateResource(id, validatedUpdates);
       dispatch({ type: 'UPDATE_RESOURCE', payload: { id, updates: validatedUpdates } });
       // 리소스 업데이트 후 전체 링크 상태 재계산은 reducer에서 자동으로 처리됨
+
+      // DB에 리소스 이력 기록
+      try {
+        await dbService.recordResourceHistory({
+          resourceId: id,
+          action: 'updated',
+          source: 'user',
+          changes: {
+            before: currentResource,
+            after: { ...currentResource, ...validatedUpdates },
+          },
+          metadata: {
+            updatedFields: Object.keys(validatedUpdates),
+          },
+        });
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('Failed to record resource history:', error);
+        }
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update resource' });
     }
@@ -591,8 +649,31 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
 
   const deleteResource = async (id: string | number) => {
     try {
+      const resource = state.resources.find(r => r.id === id);
+      
       await storageService.deleteResource(id);
       dispatch({ type: 'DELETE_RESOURCE', payload: id });
+
+      // DB에 리소스 이력 기록
+      if (resource) {
+        try {
+          await dbService.recordResourceHistory({
+            resourceId: id,
+            action: 'deleted',
+            source: 'user',
+            changes: {
+              before: resource,
+            },
+            metadata: {
+              deletedAt: new Date().toISOString(),
+            },
+          });
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.warn('Failed to record resource history:', error);
+          }
+        }
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to delete resource' });
     }
@@ -602,7 +683,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     await loadResources();
   };
 
-  const searchResources = (query: SearchQuery) => {
+  const searchResources = useCallback(async (query: SearchQuery) => {
     // 기존 쿼리와 병합
     const mergedQuery: SearchQuery = {
       text: query.text !== undefined ? query.text : state.currentSearchQuery.text,
@@ -613,9 +694,33 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       sourceType: query.sourceType !== undefined ? query.sourceType : state.currentSearchQuery.sourceType,
     };
 
-    // SET_SEARCH_QUERY 액션이 필터링도 함께 처리하므로 한 번만 디스패치
-    dispatch({ type: 'SET_SEARCH_QUERY', payload: mergedQuery });
-  };
+    // 필터링 적용
+    const filtered = applyFilters(state.resources, mergedQuery);
+
+    // 강화학습 기반 추천 적용
+    try {
+      const recommendations = await rlService.recommendResources(filtered, {
+        userRole: undefined, // RoleContext에서 가져올 수 있음
+        searchQuery: mergedQuery.text,
+        userId: undefined,
+        sessionId,
+      });
+
+      // 추천 점수를 반영하여 정렬
+      const rankedResources = recommendations
+        .map(rec => rec.resource)
+        .concat(filtered.filter(r => !recommendations.some(rec => rec.resource.id === r.id)));
+
+      dispatch({ type: 'SET_SEARCH_QUERY', payload: mergedQuery });
+      dispatch({ type: 'SET_FILTERED_RESOURCES', payload: rankedResources });
+    } catch (error) {
+      // 강화학습 실패 시 기본 필터링만 적용
+      if (import.meta.env.DEV) {
+        console.warn('RL recommendation failed:', error);
+      }
+      dispatch({ type: 'SET_SEARCH_QUERY', payload: mergedQuery });
+    }
+  }, [state.resources, state.currentSearchQuery, rlService, sessionId]);
 
   const clearSearch = () => {
     // 빈 쿼리로 설정하면 모든 리소스가 표시됨 (SET_SEARCH_QUERY에서 필터링 처리)
