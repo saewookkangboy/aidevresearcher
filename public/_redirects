@@ -1,0 +1,4 @@
+# Netlify용 리다이렉트 규칙 (Vercel은 vercel.json 사용)
+# SPA 라우팅을 위한 fallback
+/*    /index.html   200
+

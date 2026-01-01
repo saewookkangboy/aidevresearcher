@@ -38,7 +38,11 @@ Vercel은 Vite 프로젝트를 자동으로 인식하고 최적화합니다.
 1. [Vercel](https://vercel.com)에 GitHub 저장소 연결
 2. 프로젝트 가져오기
 3. 빌드 설정 자동 감지 (Vite)
-4. 배포 완료
+   - Build Command: `npm run build` (자동 감지)
+   - Output Directory: `dist` (자동 감지)
+   - Install Command: `npm install` (자동 감지)
+4. 환경 변수 설정 (필요시)
+5. 배포 완료
 
 #### 수동 배포
 
@@ -46,9 +50,27 @@ Vercel은 Vite 프로젝트를 자동으로 인식하고 최적화합니다.
 # Vercel CLI 설치
 npm i -g vercel
 
+# 로그인
+vercel login
+
 # 배포
 vercel --prod
 ```
+
+#### Vercel 설정 파일
+
+프로젝트 루트의 `vercel.json` 파일이 자동으로 적용됩니다:
+- SPA 라우팅 설정 (rewrites)
+- 보안 헤더 설정
+- 캐싱 전략
+- 정적 자산 최적화
+
+#### 환경 변수 설정
+
+Vercel 대시보드에서 환경 변수 설정:
+1. 프로젝트 → Settings → Environment Variables
+2. 필요한 변수 추가 (예: `VITE_API_URL`)
+3. 환경별로 다르게 설정 가능 (Production, Preview, Development)
 
 ### 2. Netlify 배포
 
@@ -151,10 +173,45 @@ npm run build
 
 배포 플랫폼에서 모든 경로를 `index.html`로 리다이렉트하도록 설정:
 
-- **Vercel**: `vercel.json`에 rewrites 설정
-- **Netlify**: `_redirects` 파일 생성
+- **Vercel**: `vercel.json`에 rewrites 설정 (이미 포함됨)
+- **Netlify**: `public/_redirects` 파일 생성 (이미 포함됨)
+- **Railway**: 정적 파일 서빙 설정 확인
 - **Apache**: `.htaccess` 설정
 - **Nginx**: `try_files` 설정
+
+### 5. Railway 배포
+
+Railway는 정적 사이트와 서버리스 함수를 모두 지원합니다.
+
+#### 정적 사이트 배포
+
+1. [Railway](https://railway.app)에 GitHub 저장소 연결
+2. "New Project" → "GitHub Repo" 선택
+3. 프로젝트 선택
+4. Railway가 자동으로 감지:
+   - Build Command: `npm run build`
+   - Start Command: `npm run preview` (또는 정적 파일 서빙)
+5. 환경 변수 설정 (필요시)
+6. 배포 완료
+
+#### Railway 설정 파일
+
+프로젝트 루트의 `railway.json`과 `nixpacks.toml` 파일이 자동으로 적용됩니다:
+- 빌드 설정
+- 시작 명령어
+- 정적 자산 경로
+
+#### Railway 환경 변수
+
+Railway 대시보드에서 환경 변수 설정:
+1. 프로젝트 → Variables 탭
+2. 필요한 변수 추가
+3. 환경별로 다르게 설정 가능
+
+#### Railway 정적 파일 서빙
+
+Railway는 `dist` 디렉토리를 정적 파일로 자동 서빙합니다.
+`nixpacks.toml`에서 정적 자산 경로가 설정되어 있습니다.
 
 ## 참고 자료
 
