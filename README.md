@@ -63,12 +63,40 @@ src/
 └── styles/         # 전역 스타일
 ```
 
+## 🚀 배포
+
+### Vercel 배포 (권장)
+
+```bash
+# Vercel CLI 설치
+npm i -g vercel
+
+# 배포
+vercel --prod
+```
+
+또는 [Vercel 대시보드](https://vercel.com)에서 GitHub 저장소를 연결하여 자동 배포할 수 있습니다.
+
+### Railway 배포
+
+```bash
+# Railway CLI 설치
+npm i -g @railway/cli
+
+# 배포
+railway up
+```
+
+또는 [Railway 대시보드](https://railway.app)에서 GitHub 저장소를 연결하여 자동 배포할 수 있습니다.
+
+자세한 배포 가이드는 [docs/VERCEL_RAILWAY_SETUP.md](./docs/VERCEL_RAILWAY_SETUP.md)를 참고하세요.
+
 ## 📝 개발 로드맵
 
 - [x] Phase 1: MVP (기본 기능)
 - [x] Phase 2: Auto-Research
 - [x] Phase 3: Link Health Guard
-- [ ] Phase 4: Polish & Deploy
+- [x] Phase 4: Polish & Deploy
 
 ## 📄 라이선스
 
