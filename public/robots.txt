@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
 
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Sitemap
 Sitemap: https://vibe-coding-navigator.com/sitemap.xml
 
