@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { LinkHealthStatus } from '../../utils/types';
 import { Activity, RefreshCcw } from 'lucide-react';
 import { HelpTooltip } from '../common/HelpTooltip';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface LiveOpsBarProps {
   status: LinkHealthStatus;
@@ -16,6 +17,7 @@ interface LiveOpsBarProps {
 }
 
 export function LiveOpsBar({ status, onCheckAll, onRefresh }: LiveOpsBarProps) {
+  const { t } = useLanguage();
   const [autoRefresh, setAutoRefresh] = useState(false);
 
   useEffect(() => {
@@ -30,17 +32,17 @@ export function LiveOpsBar({ status, onCheckAll, onRefresh }: LiveOpsBarProps) {
     <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 text-sm">
       <div className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-200">
         <Activity className="w-4 h-4 text-primary-600" />
-        실시간 상태
+        {t('liveOps.realtime')}
         <HelpTooltip
-          content="도구들의 실시간 상태를 확인하고 관리할 수 있습니다. '링크 재검사' 버튼으로 모든 링크를 다시 확인하고, '새로고침'으로 최신 정보를 가져올 수 있습니다. 자동 새로고침을 켜면 주기적으로 상태를 확인합니다."
-          title="실시간 상태 관리"
+          content={t('liveOps.help')}
+          title={t('liveOps.title')}
         />
       </div>
       <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-        <span>총 {status.total}</span>
-        <span className="text-green-600">정상 {status.active}</span>
-        <span className="text-red-600">깨짐 {status.broken}</span>
-        <span className="text-amber-600">수정됨 {status.fixed}</span>
+        <span>{t('liveOps.total')} {status.total}</span>
+        <span className="text-green-600">{t('linkHealth.active')} {status.active}</span>
+        <span className="text-red-600">{t('linkHealth.broken')} {status.broken}</span>
+        <span className="text-amber-600">{t('linkHealth.fixed')} {status.fixed}</span>
       </div>
       <div className="flex items-center gap-2 ml-auto">
         <button
@@ -48,13 +50,13 @@ export function LiveOpsBar({ status, onCheckAll, onRefresh }: LiveOpsBarProps) {
           className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <RefreshCcw className="w-4 h-4" />
-          링크 재검사
+          {t('liveOps.checkAll')}
         </button>
         <button
           onClick={onRefresh}
           className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
         >
-          데이터 새로고침
+          {t('liveOps.refresh')}
         </button>
         <label className="flex items-center gap-1 cursor-pointer text-gray-700 dark:text-gray-300">
           <input
@@ -62,7 +64,7 @@ export function LiveOpsBar({ status, onCheckAll, onRefresh }: LiveOpsBarProps) {
             checked={autoRefresh}
             onChange={(e) => setAutoRefresh(e.target.checked)}
           />
-          자동 90초 체크
+          {t('liveOps.autoRefresh')}
         </label>
       </div>
     </div>

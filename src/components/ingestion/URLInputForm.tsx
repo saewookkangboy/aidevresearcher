@@ -11,6 +11,7 @@ import { ErrorMessage } from '../common/ErrorMessage';
 import { SuccessMessage } from '../common/SuccessMessage';
 import { Plus, CheckCircle2, XCircle, AlertCircle, Loader2, Rss, Search, Github, Star } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { extractKeywords, inferCategoryFromQuery, inferResourceTypeFromQuery } from '../../utils/nlpMatcher';
 import { LinkHealthService } from '../../services/api/linkHealthService';
 import { GitHubSearchService, GitHubSearchResult } from '../../services/api/githubSearchService';
@@ -38,6 +39,7 @@ export function URLInputForm() {
   
   const { ingest, ingestFeed, loading, error, validating, feedProgress } = useURLIngestion();
   const { searchResources } = useResources();
+  const { t } = useLanguage();
   const linkHealthService = new LinkHealthService();
   const githubSearchService = new GitHubSearchService();
   const googleSearchService = new GoogleSearchService();
@@ -63,7 +65,7 @@ export function URLInputForm() {
         if (!isCancelledRef.current) {
           setUrlValidationStatus({
             status: 'broken',
-            message: '올바른 URL 형식이 아닙니다',
+            message: t('urlInput.invalidUrl'),
           });
         }
         return;
@@ -71,7 +73,7 @@ export function URLInputForm() {
 
       // URL 형식이 올바르면 실제 접근 가능 여부 확인
       if (!isCancelledRef.current) {
-        setUrlValidationStatus({ status: 'validating', message: '링크 확인 중...' });
+        setUrlValidationStatus({ status: 'validating', message: t('urlInput.checkingLink') });
       }
       
       try {
@@ -80,12 +82,12 @@ export function URLInputForm() {
           if (status === 'active') {
             setUrlValidationStatus({
               status: 'active',
-              message: '링크가 정상적으로 작동합니다',
+              message: t('urlInput.linkActive'),
             });
           } else {
             setUrlValidationStatus({
               status: 'broken',
-              message: '링크에 접근할 수 없습니다 (404 또는 오류)',
+              message: t('urlInput.linkBroken'),
             });
           }
         }
@@ -93,7 +95,7 @@ export function URLInputForm() {
         if (!isCancelledRef.current) {
           setUrlValidationStatus({
             status: 'broken',
-            message: '링크 확인 중 오류가 발생했습니다',
+            message: t('urlInput.linkError'),
           });
         }
       }
@@ -206,7 +208,7 @@ export function URLInputForm() {
 
       setSearchResults(results);
     } catch (err) {
-      setSearchError(err instanceof Error ? err.message : '검색 중 오류가 발생했습니다');
+      setSearchError(err instanceof Error ? err.message : t('urlInput.searchError'));
     } finally {
       setSearchLoading(false);
     }
@@ -223,7 +225,7 @@ export function URLInputForm() {
         setSearchResults(prev => prev.filter(r => r.url !== resultUrl));
       }
     } catch (err) {
-      setSearchError(err instanceof Error ? err.message : '리소스 추가 중 오류가 발생했습니다');
+      setSearchError(err instanceof Error ? err.message : t('urlInput.addError'));
     } finally {
       setAddingResults(prev => {
         const next = new Set(prev);
@@ -308,10 +310,10 @@ export function URLInputForm() {
       {/* 도구 검색 섹션 */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          도구 검색 및 추가
+          {t('urlInput.searchTitle')}
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          GitHub README 내용 또는 Google 검색을 통해 도구를 찾아 추가할 수 있습니다.
+          {t('urlInput.searchDescription')}
         </p>
         
         <form onSubmit={handleSearch} className="space-y-4 mb-4">
@@ -321,7 +323,7 @@ export function URLInputForm() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="예: Python AI 라이브러리, React 컴포넌트, MCP 서버..."
+                placeholder={t('urlInput.searchPlaceholder')}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
@@ -330,8 +332,8 @@ export function URLInputForm() {
               onChange={(e) => setSearchType(e.target.value as 'github' | 'google')}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
-              <option value="github">GitHub README</option>
-              <option value="google">Google 검색</option>
+              <option value="github">{t('urlInput.githubReadme')}</option>
+              <option value="google">{t('urlInput.googleSearch')}</option>
             </select>
             <button
               type="submit"
@@ -341,12 +343,12 @@ export function URLInputForm() {
               {searchLoading ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  <span>검색 중...</span>
+                  <span>{t('urlInput.searching')}</span>
                 </>
               ) : (
                 <>
                   <Search className="w-5 h-5" />
-                  <span>검색</span>
+                  <span>{t('urlInput.searchButton')}</span>
                 </>
               )}
             </button>
@@ -360,7 +362,7 @@ export function URLInputForm() {
         {searchResults.length > 0 && (
           <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              검색 결과 ({searchResults.length}개)
+              {t('urlInput.results')} ({searchResults.length}{t('urlInput.items')})
             </p>
             {searchResults.map((result) => {
               const isAdding = addingResults.has(result.url);
@@ -394,7 +396,7 @@ export function URLInputForm() {
                         )}
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-                        {description || '설명 없음'}
+                        {description || t('urlInput.noDescription')}
                       </p>
                       {isGitHubResult && (result as GitHubSearchResult).language && (
                         <span className="inline-block text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
@@ -410,12 +412,12 @@ export function URLInputForm() {
                       {isAdding ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          <span>추가 중...</span>
+                          <span>{t('urlInput.adding')}</span>
                         </>
                       ) : (
                         <>
                           <Plus className="w-3 h-3" />
-                          <span>추가</span>
+                          <span>{t('urlInput.add')}</span>
                         </>
                       )}
                     </button>
@@ -429,12 +431,12 @@ export function URLInputForm() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          새 도구 추가하기 (URL 직접 입력)
+          {t('urlInput.directInput')}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              도구 URL (GitHub, PyPI, 또는 문서 페이지)
+              {t('urlInput.title')}
             </label>
             <div className="flex gap-2">
               <div className="flex-1">
@@ -487,12 +489,12 @@ export function URLInputForm() {
                 {loading ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    <span>{validating ? '링크 확인 중...' : '분석 중...'}</span>
+                    <span>{validating ? t('urlInput.checkingLink') : t('common.loading')}</span>
                   </>
                 ) : (
                   <>
                     <Plus className="w-5 h-5" />
-                    <span>추가</span>
+                    <span>{t('urlInput.addButton')}</span>
                   </>
                 )}
               </button>
@@ -519,7 +521,7 @@ export function URLInputForm() {
 
           {success && (
             <SuccessMessage
-              message="도구가 성공적으로 추가되었습니다!"
+              message={t('urlInput.success')}
               onDismiss={() => setSuccess(false)}
             />
           )}
@@ -528,15 +530,15 @@ export function URLInputForm() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Feed에서 도구 일괄 추가
+          {t('urlInput.feedUrl')}
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          RSS/Atom Feed URL을 입력하면 Feed에 포함된 GitHub 리포지토리를 자동으로 수집합니다.
+          {t('urlInput.feedDescription') || 'Enter RSS/Atom Feed URL to automatically collect GitHub repositories from the feed.'}
         </p>
         <form onSubmit={handleFeedSubmit} className="space-y-4">
           <div>
             <label htmlFor="feedUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Feed URL (RSS/Atom)
+              {t('urlInput.feedUrl')}
             </label>
             <div className="flex gap-2">
               <input
@@ -559,15 +561,15 @@ export function URLInputForm() {
                     <LoadingSpinner size="sm" />
                     <span>
                       {feedProgress 
-                        ? `처리 중... ${feedProgress.current}/${feedProgress.total}`
-                        : '분석 중...'
+                        ? `${t('urlInput.feedCollecting')} ${feedProgress.current}/${feedProgress.total}`
+                        : t('common.loading')
                       }
                     </span>
                   </>
                 ) : (
                   <>
                     <Rss className="w-5 h-5" />
-                    <span>Feed 수집</span>
+                    <span>{t('urlInput.feedButton')}</span>
                   </>
                 )}
               </button>
@@ -581,7 +583,7 @@ export function URLInputForm() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {feedProgress.current} / {feedProgress.total} 리소스 처리 중...
+                  {feedProgress.current} / {feedProgress.total} {t('urlInput.feedCollecting')}
                 </p>
               </div>
             )}
@@ -596,7 +598,7 @@ export function URLInputForm() {
 
           {feedSuccess && (
             <SuccessMessage
-              message="Feed에서 도구가 성공적으로 추가되었습니다!"
+              message={t('urlInput.feedSuccess')}
               onDismiss={() => setFeedSuccess(false)}
             />
           )}

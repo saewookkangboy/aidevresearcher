@@ -13,6 +13,7 @@ import { CommandCopyButton } from './CommandCopyButton';
 import { ExternalLink, Star, Heart, Share2, Edit2, Check, X, Loader2, CheckCircle2, XCircle, ShieldAlert } from 'lucide-react';
 import { formatNumber, truncateText } from '../../utils/formatters';
 import { useResources } from '../../contexts/ResourceContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { LinkHealthService } from '../../services/api/linkHealthService';
 import { IngestionSimulator } from '../../services/simulation/ingestionSimulator';
 import { detectDangerousCommand, getVulnerabilityFindings } from '../../utils/safety';
@@ -45,10 +46,10 @@ function getTrustScore(resource: Resource) {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function getTrustLabel(score: number) {
-  if (score >= 75) return { label: '신뢰 높음', className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800' };
-  if (score >= 50) return { label: '신뢰 보통', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700' };
-  return { label: '검토 필요', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800' };
+function getTrustLabel(score: number, t: (key: string) => string) {
+  if (score >= 75) return { label: t('resourceCard.trustHigh') || '신뢰 높음', className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800' };
+  if (score >= 50) return { label: t('resourceCard.trustMedium') || '신뢰 보통', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700' };
+  return { label: t('resourceCard.trustLow') || '검토 필요', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800' };
 }
 
 function formatDateLabel(value?: string) {
@@ -66,6 +67,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
   const [urlValidationStatus, setUrlValidationStatus] = useState<{ status: LinkStatus | 'validating'; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const { updateResource, checkLinkHealth, addActivity, recordInteraction } = useResources();
+  const { t } = useLanguage();
   
   // 인스턴스를 메모이제이션하여 불필요한 재생성 방지
   const linkHealthService = useMemo(() => new LinkHealthService(), []);
@@ -76,7 +78,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
   const vulnFindings = useMemo(() => getVulnerabilityFindings(resource), [resource]);
 
   const trustScore = getTrustScore(resource);
-  const trustLabel = getTrustLabel(trustScore);
+  const trustLabel = getTrustLabel(trustScore, t);
   
   // MCP 리소스 확인 (태그나 URL에 'mcp' 포함)
   const isMCPResource = useMemo(() => {
@@ -127,7 +129,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
     if (!urlToValidate.trim()) {
       setUrlValidationStatus({
         status: 'broken',
-        message: 'URL을 입력해주세요',
+        message: t('resourceCard.urlRequired') || 'URL을 입력해주세요',
       });
       return;
     }
@@ -137,30 +139,30 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
     } catch {
       setUrlValidationStatus({
         status: 'broken',
-        message: '올바른 URL 형식이 아닙니다',
+        message: t('urlInput.invalidUrl'),
       });
       return;
     }
 
-    setUrlValidationStatus({ status: 'validating', message: '링크 확인 중...' });
+    setUrlValidationStatus({ status: 'validating', message: t('urlInput.checkingLink') });
     
     try {
       const status = await linkHealthService.checkLink(urlToValidate);
       if (status === 'active') {
         setUrlValidationStatus({
           status: 'active',
-          message: '링크가 정상적으로 작동합니다',
+          message: t('urlInput.linkActive'),
         });
       } else {
         setUrlValidationStatus({
           status: 'broken',
-          message: '링크에 접근할 수 없습니다',
+          message: t('urlInput.linkBroken'),
         });
       }
     } catch (err) {
       setUrlValidationStatus({
         status: 'broken',
-        message: '링크 확인 중 오류가 발생했습니다',
+        message: t('urlInput.linkError'),
       });
     }
   };
@@ -334,21 +336,21 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       {/* Metadata */}
       <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-3 sm:mb-4">
         <div>
-          <p className="font-medium text-gray-700 dark:text-gray-200">업데이트</p>
+          <p className="font-medium text-gray-700 dark:text-gray-200">{t('resourceCard.updated') || '업데이트'}</p>
           <p>{formatDateLabel(resource.updatedAt || resource.createdAt)}</p>
         </div>
         <div>
-          <p className="font-medium text-gray-700 dark:text-gray-200">링크 체크</p>
+          <p className="font-medium text-gray-700 dark:text-gray-200">{t('resourceCard.linkCheck') || '링크 체크'}</p>
           <p>{formatDateLabel(resource.lastCheckedAt)}</p>
         </div>
         {resource.meta && (
           <>
             <div>
-              <p className="font-medium text-gray-700 dark:text-gray-200">스냅샷</p>
+              <p className="font-medium text-gray-700 dark:text-gray-200">{t('resourceCard.snapshot') || '스냅샷'}</p>
               <p className="line-clamp-1">{resource.meta.title || resource.title || 'N/A'}</p>
             </div>
             <div>
-              <p className="font-medium text-gray-700 dark:text-gray-200">상태/타입</p>
+              <p className="font-medium text-gray-700 dark:text-gray-200">{t('resourceCard.statusType') || '상태/타입'}</p>
               <p>{resource.meta.statusCode || 200} · {resource.meta.contentType || 'text/html'}</p>
             </div>
           </>
@@ -365,11 +367,11 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
       {/* Auto workflow suggestion */}
       {resource.command && (
         <div className="mb-4 p-2.5 sm:p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
-          <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2">자동 워크플로우</p>
+          <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2">{t('resourceCard.autoWorkflow')}</p>
           <ol className="list-decimal list-inside text-[10px] sm:text-xs text-gray-700 dark:text-gray-200 space-y-0.5 sm:space-y-1 break-words overflow-wrap-anywhere">
-            <li className="break-words overflow-wrap-anywhere">설치: <code className="break-all">{resource.command}</code> 실행</li>
-            <li className="break-words overflow-wrap-anywhere">설정: 공식 문서/README 확인 (<a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline break-all">{resource.url}</a>)</li>
-            <li>검증: 링크 헬스 체크 후 샘플 명령 실행</li>
+            <li className="break-words overflow-wrap-anywhere">{t('resourceCard.install') || 'Install'}: <code className="break-all">{resource.command}</code> {t('resourceCard.execute') || 'execute'}</li>
+            <li className="break-words overflow-wrap-anywhere">{t('resourceCard.setup') || 'Setup'}: {t('resourceCard.checkDocs') || 'Check official docs/README'} (<a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline break-all">{resource.url}</a>)</li>
+            <li>{t('resourceCard.verify') || 'Verify'}: {t('resourceCard.checkLinkHealth') || 'Check link health and run sample command'}</li>
           </ol>
         </div>
       )}
@@ -378,10 +380,10 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         <div className="mb-4 p-2.5 sm:p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-[10px] sm:text-xs">
           <div className="flex items-center gap-2 font-semibold mb-1">
             <ShieldAlert className="w-4 h-4" />
-            <span>안전 경고</span>
+            <span>{t('resourceCard.safetyWarning') || '안전 경고'}</span>
           </div>
           {risk.risky && (
-            <p className="mb-1">명령 확인 필요: {risk.reasons.join(', ')}</p>
+            <p className="mb-1">{t('resourceCard.commandCheckRequired') || '명령 확인 필요'}: {risk.reasons.join(', ')}</p>
           )}
           {vulnFindings.length > 0 && (
             <ul className="list-disc list-inside space-y-1">
@@ -400,15 +402,15 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         <div className="mb-4 p-2.5 sm:p-3 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-100">명령어 미리보기</p>
-              <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300">터미널에 붙여넣기 전에 실행 흐름을 확인할 수 있습니다.</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-100">{t('resourceCard.commandPreview') || '명령어 미리보기'}</p>
+              <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300">{t('resourceCard.commandPreviewDesc') || '터미널에 붙여넣기 전에 실행 흐름을 확인할 수 있습니다.'}</p>
             </div>
             <button
               onClick={handleRun}
               disabled={runState === 'running'}
               className="px-3 sm:px-4 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs sm:text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 active:bg-primary-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors touch-manipulation whitespace-nowrap"
             >
-              {runState === 'running' ? '실행 중...' : '실행 시뮬레이션'}
+              {runState === 'running' ? t('common.loading') : t('resourceCard.runSimulation') || '실행 시뮬레이션'}
             </button>
           </div>
           {runNote && (
@@ -425,7 +427,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
           <div className="space-y-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                URL 수정
+                {t('resourceCard.editUrl') || 'URL 수정'}
               </label>
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -544,7 +546,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
                 }}
                 className="inline-flex items-center gap-1 text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium min-h-[44px] sm:min-h-0 px-2 sm:px-0 touch-manipulation"
               >
-                <span>자세히 보기</span>
+                <span>{t('resourceCard.viewDetails')}</span>
                 {isMCPResource && (
                   <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700">
                     <span>🔗</span>

@@ -7,7 +7,8 @@
 import { useMemo } from 'react';
 import { useRole } from '../../contexts/RoleContext';
 import { useResources } from '../../contexts/ResourceContext';
-import { ROLE_LABELS, ROLE_ICONS } from '../../utils/roleConfigs';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { ROLE_ICONS } from '../../utils/roleConfigs';
 import { Target, ClipboardList, BadgeCheck } from 'lucide-react';
 import { HelpTooltip } from '../common/HelpTooltip';
 
@@ -159,6 +160,7 @@ const BASE_STEPS: Record<string, PlanStep[]> = {
 };
 
 export function GoalPlanner() {
+  const { t } = useLanguage();
   const { currentRole, getRecommendations } = useRole();
   const { resources } = useResources();
 
@@ -193,14 +195,14 @@ export function GoalPlanner() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-primary-600" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">목표 기반 플래너</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('planner.title')}</h2>
           <HelpTooltip
-            content="프로젝트를 단계별로 나누어 필요한 도구와 실행 순서를 추천해드립니다. 역할을 선택하면 해당 역할에 맞는 맞춤 플랜이 자동으로 생성됩니다. 각 단계를 따라가면 프로젝트를 체계적으로 완성할 수 있어요."
-            title="플래너 사용법"
+            content={t('planner.help')}
+            title={t('planner.title')}
           />
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-300">
-          {currentRole ? `${ROLE_ICONS[currentRole]} ${ROLE_LABELS[currentRole]} 기준 플랜` : '역할을 선택하면 맞춤 플랜이 적용됩니다.'}
+          {currentRole ? `${ROLE_ICONS[currentRole]} ${t(`role.${currentRole}`)} ${t('planner.plan') || 'plan'}` : t('planner.roleBased')}
         </div>
       </div>
 
@@ -222,10 +224,10 @@ export function GoalPlanner() {
         <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <ClipboardList className="w-4 h-4 text-primary-600" />
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">추천 도구</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('planner.recommendedTools')}</p>
           </div>
           {topResources.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">검색 결과가 보이면 여기서 바로 실행할 수 있어요.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('planner.noResults')}</p>
           ) : (
             <ul className="space-y-2">
               {topResources.map((resource) => (

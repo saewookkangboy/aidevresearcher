@@ -6,9 +6,11 @@
 
 import { Clock3, RefreshCw, Trash2 } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { HelpTooltip } from '../common/HelpTooltip';
 
 export function ActivityFeed() {
+  const { t } = useLanguage();
   const { activityLog, clearActivity, refreshResources } = useResources();
 
   const sorted = [...activityLog].sort(
@@ -24,10 +26,10 @@ export function ActivityFeed() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Clock3 className="w-5 h-5 text-primary-600" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">활동 로그</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('activity.title')}</h2>
           <HelpTooltip
-            content="도구 추가, 검색, 필터링 등 모든 활동 내역을 시간순으로 확인할 수 있습니다. '새로고침'으로 최신 정보를 가져오고, '비우기'로 로그를 지울 수 있습니다."
-            title="활동 로그"
+            content={t('activity.help')}
+            title={t('activity.title')}
           />
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -36,14 +38,14 @@ export function ActivityFeed() {
             className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <RefreshCw className="w-4 h-4" />
-            새로고침
+            {t('common.refresh')}
           </button>
           <button
             onClick={clearActivity}
             className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <Trash2 className="w-4 h-4" />
-            비우기
+            {t('activity.clear')}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@
  */
 
 import { CheckCircle, X } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SuccessMessageProps {
   message: string;
@@ -12,6 +13,7 @@ interface SuccessMessageProps {
 }
 
 export function SuccessMessage({ message, onDismiss }: SuccessMessageProps) {
+  const { t } = useLanguage();
   return (
     <div
       className="flex items-start gap-3 p-4 rounded-lg border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300"
@@ -26,7 +28,7 @@ export function SuccessMessage({ message, onDismiss }: SuccessMessageProps) {
         <button
           onClick={onDismiss}
           className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          aria-label="성공 메시지 닫기"
+          aria-label={t('success.dismiss')}
         >
           <X className="w-4 h-4" />
         </button>

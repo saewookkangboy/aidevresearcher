@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Resource } from '../../utils/types';
 import { ResourceCard } from './ResourceCard';
 import { EmptyState } from '../common/EmptyState';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ResourceGridProps {
   resources: Resource[];
@@ -36,6 +37,7 @@ MemoizedResourceCard.displayName = 'MemoizedResourceCard';
  * - 메모이제이션을 통한 불필요한 재렌더링 방지
  */
 export function ResourceGrid({ resources, onViewDetails, onClearSearch }: ResourceGridProps) {
+  const { t } = useLanguage();
   const [visibleCount, setVisibleCount] = useState(INITIAL_ITEMS);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -117,7 +119,7 @@ export function ResourceGrid({ resources, onViewDetails, onClearSearch }: Resour
             disabled={isLoading}
             className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? '로딩 중...' : `더 보기 (${resources.length - visibleCount}개 남음)`}
+            {isLoading ? t('common.loading') : `${t('resources.loadMore') || '더 보기'} (${resources.length - visibleCount}${t('common.items') || '개'} ${t('resources.remaining') || '남음'})`}
           </button>
         </div>
       )}

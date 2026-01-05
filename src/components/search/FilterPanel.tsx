@@ -9,9 +9,11 @@ import { ResourceCategory } from '../../utils/types';
 import { CategoryFilter } from './CategoryFilter';
 import { HelpTooltip } from '../common/HelpTooltip';
 import { useResources } from '../../contexts/ResourceContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export function FilterPanel() {
   const { searchResources, currentSearchQuery } = useResources();
+  const { t } = useLanguage();
   const [selectedCategories, setSelectedCategories] = useState<ResourceCategory[]>([]);
 
   // currentSearchQuery에서 카테고리 초기화
@@ -44,10 +46,10 @@ export function FilterPanel() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4" role="region" aria-label="카테고리 필터">
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">도구 유형 필터</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('filter.title')}</h3>
         <HelpTooltip
-          content="도구를 유형별로 필터링할 수 있습니다. 여러 유형을 동시에 선택할 수 있어요."
-          title="필터 사용법"
+          content={t('filter.help')}
+          title={t('filter.title')}
         />
       </div>
       <CategoryFilter

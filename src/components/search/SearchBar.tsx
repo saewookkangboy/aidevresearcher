@@ -4,9 +4,10 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { SearchQuery } from '../../utils/types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { inferCategoryFromQuery, inferResourceTypeFromQuery, extractKeywords } from '../../utils/nlpMatcher';
 
 interface SearchBarProps {
@@ -14,8 +15,10 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export function SearchBar({ onSearch, placeholder = '검색어를 입력하세요...' }: SearchBarProps) {
+export function SearchBar({ onSearch, placeholder }: SearchBarProps) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
+  const defaultPlaceholder = placeholder || t('search.placeholder');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -33,12 +36,23 @@ export function SearchBar({ onSearch, placeholder = '검색어를 입력하세�
     });
   };
 
-  const exampleQueries = [
-    '이미지 분석 봇 만들기',
-    'Python AI 라이브러리',
-    '웹사이트 SEO 개선',
-    '챗봇 만들기',
-  ];
+  const exampleQueries = useMemo(() => {
+    const lang = t('language.ko') === '한국어' ? 'ko' : 'en';
+    if (lang === 'ko') {
+      return [
+        '이미지 분석 봇 만들기',
+        'Python AI 라이브러리',
+        '웹사이트 SEO 개선',
+        '챗봇 만들기',
+      ];
+    }
+    return [
+      'Create image analysis bot',
+      'Python AI library',
+      'Improve website SEO',
+      'Create chatbot',
+    ];
+  }, [t]);
 
   return (
     <div className="w-full">
@@ -51,15 +65,15 @@ export function SearchBar({ onSearch, placeholder = '검색어를 입력하세�
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={placeholder}
-            aria-label="도구 검색"
+            placeholder={defaultPlaceholder}
+            aria-label={t('common.search')}
             className="block w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base shadow-sm transition-all touch-manipulation"
           />
         </div>
       </form>
       {query.length === 0 && (
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 self-center">예시:</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 self-center">{t('search.examples') || 'Examples'}:</span>
           {exampleQueries.map((example, idx) => (
             <button
               key={idx}

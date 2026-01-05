@@ -5,6 +5,7 @@
  */
 
 import { AlertCircle, X } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ErrorMessageProps {
   message: string;
@@ -13,6 +14,7 @@ interface ErrorMessageProps {
 }
 
 export function ErrorMessage({ message, onDismiss, variant = 'error' }: ErrorMessageProps) {
+  const { t } = useLanguage();
   const variantStyles = {
     error: {
       container: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
@@ -47,7 +49,7 @@ export function ErrorMessage({ message, onDismiss, variant = 'error' }: ErrorMes
         <button
           onClick={onDismiss}
           className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          aria-label="에러 메시지 닫기"
+          aria-label={t('error.dismiss')}
         >
           <X className="w-4 h-4" />
         </button>

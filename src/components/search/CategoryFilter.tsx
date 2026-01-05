@@ -5,7 +5,8 @@
  */
 
 import { ResourceCategory } from '../../utils/types';
-import { CATEGORY_LABELS, CATEGORY_ICONS } from '../../utils/constants';
+import { CATEGORY_ICONS } from '../../utils/constants';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { X } from 'lucide-react';
 
 interface CategoryFilterProps {
@@ -17,9 +18,11 @@ interface CategoryFilterProps {
 const ALL_CATEGORIES: ResourceCategory[] = ['SKILLS', 'TOOLS', 'EXTENSION', 'MCP'];
 
 export function CategoryFilter({ selectedCategories, onToggle, onClear }: CategoryFilterProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">카테고리:</span>
+      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('common.filter')}:</span>
       {ALL_CATEGORIES.map((category) => {
         const isSelected = selectedCategories.includes(category);
         return (
@@ -34,18 +37,18 @@ export function CategoryFilter({ selectedCategories, onToggle, onClear }: Catego
             }`}
           >
             <span>{CATEGORY_ICONS[category]}</span>
-            <span>{CATEGORY_LABELS[category]}</span>
+            <span>{t(`category.${category}`)}</span>
           </button>
         );
       })}
       {selectedCategories.length > 0 && (
         <button
           onClick={onClear}
-          aria-label="필터 초기화"
+          aria-label={t('common.clear')}
           className="inline-flex items-center gap-1 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
         >
           <X className="w-4 h-4" />
-          <span>초기화</span>
+          <span>{t('common.clear')}</span>
         </button>
       )}
     </div>

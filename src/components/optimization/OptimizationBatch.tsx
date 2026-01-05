@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { Wand2, Globe2, Activity, X, FileText, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { HelpTooltip } from '../common/HelpTooltip';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 type JobStatus = 'pending' | 'running' | 'done';
 
@@ -198,10 +199,10 @@ export function OptimizationBatch() {
     <div className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
       <div className="flex items-center gap-2 mb-4">
         <Wand2 className="w-5 h-5 text-primary-600" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">SEO / AI SEO / GEO / AIO 배치 실행</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('optimization.title')}</h2>
         <HelpTooltip
-          content="웹사이트의 SEO(검색 엔진 최적화), AI SEO(AI 기반 SEO), GEO(생성형 엔진 최적화), AIO(통합 최적화)를 한 번에 실행하고 분석 결과를 확인할 수 있습니다. 도메인을 입력하고 실행하면 자동으로 분석이 진행됩니다."
-          title="배치 최적화"
+          content={t('optimization.help')}
+          title={t('optimization.title')}
         />
       </div>
 
@@ -209,17 +210,17 @@ export function OptimizationBatch() {
         <div className="md:col-span-2 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              도메인 또는 페이지 URL
+              {t('optimization.domain')}
             </label>
             <input
               type="text"
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t('optimization.domainPlaceholder')}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              한 번에 SEO/AI SEO/GEO/AIO 명령을 순차 실행하고 보고서를 생성합니다.
+              {t('optimization.domainHelp')}
             </p>
           </div>
 
@@ -229,13 +230,13 @@ export function OptimizationBatch() {
               disabled={!domain.trim() || running}
               className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {running ? '실행 중...' : '자동 최적화 실행'}
+              {running ? t('optimization.running') : t('optimization.run')}
             </button>
             <button
               onClick={reset}
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
-              초기화
+              {t('common.reset')}
             </button>
           </div>
         </div>

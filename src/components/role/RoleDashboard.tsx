@@ -7,8 +7,9 @@
 import { useMemo } from 'react';
 import { useRole } from '../../contexts/RoleContext';
 import { useResources } from '../../contexts/ResourceContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Resource, AgentRole } from '../../utils/types';
-import { ROLE_LABELS, ROLE_ICONS, ROLE_PREFERENCES } from '../../utils/roleConfigs';
+import { ROLE_ICONS, ROLE_PREFERENCES } from '../../utils/roleConfigs';
 import { BarChart3, TrendingUp, Package, Star } from 'lucide-react';
 import { HelpTooltip } from '../common/HelpTooltip';
 
@@ -112,6 +113,7 @@ function calculateRoleStatistics(
  * Role별 전용 대시보드 컴포넌트
  */
 export function RoleDashboard() {
+  const { t } = useLanguage();
   const { currentRole } = useRole();
   const { resources } = useResources();
 
@@ -125,7 +127,6 @@ export function RoleDashboard() {
   }
 
   const roleIcon = ROLE_ICONS[currentRole];
-  const roleLabel = ROLE_LABELS[currentRole];
 
   // 플랫폼별 통계를 배열로 변환 (상위 5개)
   const platformStats = Object.entries(statistics.byPlatform)
@@ -146,15 +147,15 @@ export function RoleDashboard() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {roleLabel} 대시보드
+                {t('dashboard.title', { role: t(`role.${currentRole}`) })}
               </h2>
               <HelpTooltip
-                content="선택한 역할에 맞는 맞춤형 통계와 추천 도구를 보여드립니다. 플랫폼별 분포, 타입별 분포, 인기 도구, 프레임워크별 분포 등을 한눈에 확인할 수 있습니다."
-                title="역할 대시보드"
+                content={t('dashboard.help')}
+                title={t('dashboard.title', { role: t(`role.${currentRole}`) })}
               />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              맞춤형 리소스 통계 및 추천
+              {t('dashboard.description')}
             </p>
           </div>
         </div>
@@ -166,7 +167,7 @@ export function RoleDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                총 리소스
+                {t('dashboard.totalResources')}
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {statistics.totalResources}
@@ -180,7 +181,7 @@ export function RoleDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                평균 Stars
+                {t('dashboard.averageStars') || 'Average Stars'}
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {statistics.averageStars.toLocaleString()}
@@ -194,7 +195,7 @@ export function RoleDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                플랫폼 종류
+                {t('dashboard.platformTypes') || 'Platform Types'}
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {Object.keys(statistics.byPlatform).length}
@@ -212,7 +213,7 @@ export function RoleDashboard() {
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                플랫폼별 분포
+                {t('dashboard.byPlatform')}
               </h3>
             </div>
             <div className="space-y-3">
@@ -226,7 +227,7 @@ export function RoleDashboard() {
                         {platform}
                       </span>
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {count}개 ({percentage.toFixed(1)}%)
+                        {count}{t('common.items') || '개'} ({percentage.toFixed(1)}%)
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -248,7 +249,7 @@ export function RoleDashboard() {
             <div className="flex items-center gap-2 mb-4">
               <Package className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                타입별 분포
+                {t('dashboard.byType')}
               </h3>
             </div>
             <div className="space-y-3">
@@ -262,7 +263,7 @@ export function RoleDashboard() {
                         {type}
                       </span>
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {count}개 ({percentage.toFixed(1)}%)
+                        {count}{t('common.items') || '개'} ({percentage.toFixed(1)}%)
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -285,7 +286,7 @@ export function RoleDashboard() {
           <div className="flex items-center gap-2 mb-4">
             <Star className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              인기 리소스 (Stars 기준)
+              {t('dashboard.topResources')} ({t('resourceCard.stars')} {t('dashboard.byStars') || '기준'})
             </h3>
           </div>
           <div className="space-y-2">
@@ -344,6 +345,7 @@ export function RoleDashboard() {
  * Frontend Developer 특화 섹션
  */
 function FrontendSpecificSection({ resources }: { resources: Resource[] }) {
+  const { t } = useLanguage();
   // 프레임워크별 통계 (platforms 배열과 텍스트 분석 결합)
   const frameworkStats = useMemo(() => {
     const stats: Record<string, number> = {};
@@ -462,7 +464,7 @@ function FrontendSpecificSection({ resources }: { resources: Resource[] }) {
       {Object.keys(frameworkStats).length > 0 && (
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            🎨 프레임워크별 리소스 분포
+            🎨 {t('dashboard.frameworkDistribution')}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {Object.entries(frameworkStats)
@@ -488,7 +490,7 @@ function FrontendSpecificSection({ resources }: { resources: Resource[] }) {
           </div>
           {Object.keys(frameworkStats).length === 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-              프레임워크 정보가 있는 리소스가 없습니다.
+              {t('dashboard.noFramework')}
             </p>
           )}
         </div>

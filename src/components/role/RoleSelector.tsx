@@ -5,7 +5,8 @@
  */
 
 import { useState } from 'react';
-import { useRole, ROLE_LABELS, ROLE_ICONS } from '../../contexts/RoleContext';
+import { useRole, ROLE_ICONS } from '../../contexts/RoleContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { AgentRole } from '../../utils/types';
 import { User, Check } from 'lucide-react';
 
@@ -16,8 +17,14 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
+  const { t } = useLanguage();
   const { currentRole, setRole, clearRole } = useRole();
   const [isOpen, setIsOpen] = useState(false);
+  
+  const getRoleLabel = (role: AgentRole) => {
+    if (!role) return t('roleSelector.noRole');
+    return t(`role.${role}`);
+  };
 
   const handleRoleSelect = async (role: AgentRole) => {
     await setRole(role);
@@ -42,7 +49,7 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
             ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-300 dark:border-primary-700 hover:bg-primary-100 dark:hover:bg-primary-900/50 active:bg-primary-200 dark:active:bg-primary-900/70'
             : 'bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600'
         }`}
-        title={currentRole ? `${ROLE_LABELS[currentRole]} 역할이 선택되었습니다` : '역할을 선택하면 맞춤 도구를 추천해드립니다'}
+        title={currentRole ? `${getRoleLabel(currentRole)} ${t('roleSelector.selected') || '역할이 선택되었습니다'}` : t('roleSelector.selectRole')}
       >
         {currentRole ? (
           <>
@@ -50,7 +57,7 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
             {!compact && (
               <>
                 <span className="hidden sm:inline text-sm font-semibold text-primary-700 dark:text-primary-300">
-                  {ROLE_LABELS[currentRole]}
+                  {getRoleLabel(currentRole)}
                 </span>
                 <Check className="hidden sm:block w-4 h-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               </>
@@ -60,7 +67,7 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
           <>
             <User className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
             {!compact && (
-              <span className="hidden sm:inline text-sm font-medium text-gray-600 dark:text-gray-400">역할 선택</span>
+              <span className="hidden sm:inline text-sm font-medium text-gray-600 dark:text-gray-400">{t('roleSelector.selectRole')}</span>
             )}
           </>
         )}
@@ -77,10 +84,10 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
           } mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-20`}>
             <div className="p-3">
               <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-3 py-2 mb-1">
-                역할 선택
+                {t('roleSelector.selectRole')}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 px-3 mb-2">
-                역할을 선택하면 맞춤 도구를 추천해드립니다
+                {t('roleSelector.description') || '역할을 선택하면 맞춤 도구를 추천해드립니다'}
               </p>
               {AVAILABLE_ROLES.map((role) => (
                 <button
@@ -93,7 +100,7 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
                   }`}
                 >
                   <span className="text-xl">{ROLE_ICONS[role]}</span>
-                  <span className="flex-1 text-left">{ROLE_LABELS[role]}</span>
+                  <span className="flex-1 text-left">{getRoleLabel(role)}</span>
                   {currentRole === role && (
                     <Check className="w-4 h-4 text-primary-600" />
                   )}
@@ -107,7 +114,7 @@ export function RoleSelector({ compact = false }: RoleSelectorProps = {}) {
                     className="w-full flex items-center gap-3 px-3 py-3 sm:py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[44px] touch-manipulation"
                   >
                     <User className="w-4 h-4" />
-                    <span>역할 초기화</span>
+                    <span>{t('roleSelector.clearRole') || '역할 초기화'}</span>
                   </button>
                 </>
               )}

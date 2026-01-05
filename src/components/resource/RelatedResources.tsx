@@ -10,6 +10,7 @@ import { ResourceCard } from './ResourceCard';
 import { LinkIcon } from 'lucide-react';
 import { RESOURCE_GRAPH } from '../../data/resourceGraph';
 import { HelpTooltip } from '../common/HelpTooltip';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface RelatedResourcesProps {
   resources: Resource[];
@@ -26,6 +27,7 @@ function similarityScore(a: Resource, b: Resource): number {
 }
 
 export function RelatedResources({ resources }: RelatedResourcesProps) {
+  const { t } = useLanguage();
   const related = useMemo(() => {
     if (resources.length < 1) return null;
     const anchor = resources[0];
@@ -57,15 +59,15 @@ export function RelatedResources({ resources }: RelatedResourcesProps) {
       <div className="flex items-center gap-2 mb-3">
         <LinkIcon className="w-5 h-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          함께 쓰면 좋은 리소스
+          {t('related.title')}
         </h3>
         <HelpTooltip
-          content="현재 선택한 도구와 유사하거나 함께 사용하기 좋은 도구들을 추천해드립니다. 태그, 플랫폼, 유형이 비슷한 도구들이 자동으로 표시됩니다."
-          title="관련 도구 추천"
+          content={t('related.help')}
+          title={t('related.title')}
         />
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-        기준 리소스: <span className="font-semibold">{related.anchor.title}</span>
+        {t('related.basedOn')}: <span className="font-semibold">{related.anchor.title}</span>
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {related.items.map(({ resource }) => (
