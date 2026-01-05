@@ -2,7 +2,7 @@
 
 바이브 코딩(AI Native Coding) 입문자를 위한 개발 리소스 네비게이션 허브
 
-> **"Don't search, Just Vibe."** - 헤매지 말고, 흐름을 타라.
+> **"Don't search, Just Vibe."** - 헤매지 말고, 지금 바로 시도하세요.
 
 ## 🚀 시작하기
 
