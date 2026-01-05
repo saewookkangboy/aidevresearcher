@@ -31,6 +31,7 @@ import { ActivityFeed } from './activity/ActivityFeed';
 import { RoleDashboard } from './role/RoleDashboard';
 import { useBehaviorRanking } from '../hooks/useBehaviorRanking';
 import { Sparkles, Search, Target, BookOpen, HelpCircle } from 'lucide-react';
+import { HelpTooltip } from './common/HelpTooltip';
 
 // 컴포넌트 매핑
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
@@ -148,6 +149,10 @@ export function AppContent() {
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   무엇을 찾고 계신가요?
                 </h2>
+                <HelpTooltip
+                  content="자연스러운 문장으로 검색하면 AI가 의미를 이해해서 관련 도구를 찾아드립니다. 예: '이미지 분석 봇 만들고 싶어요', 'Python으로 AI 라이브러리 찾기' 등"
+                  title="검색 사용법"
+                />
               </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 자연스러운 문장으로 검색하세요. 예: "이미지 분석 봇 만들기", "Python AI 라이브러리", "웹사이트 SEO 개선"
@@ -160,6 +165,20 @@ export function AppContent() {
       case 'filter':
         return (
           <div className="mb-6 sm:mb-8">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  도구 필터링
+                </h2>
+                <HelpTooltip
+                  content="도구를 유형별로 필터링할 수 있습니다. 여러 유형을 동시에 선택하면 해당하는 모든 도구가 표시됩니다. 예: 'Skills'와 'Tools'를 함께 선택하면 두 유형의 도구가 모두 보입니다."
+                  title="필터 사용법"
+                />
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                원하는 도구 유형을 선택하여 검색 결과를 좁혀보세요. 여러 유형을 동시에 선택할 수 있습니다.
+              </p>
+            </div>
             <Component />
           </div>
         );
@@ -167,6 +186,21 @@ export function AppContent() {
       case 'goal-planner':
         return (
           <div className="mb-6 sm:mb-8">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  목표 기반 플래너
+                </h2>
+                <HelpTooltip
+                  content="프로젝트 목표를 단계별로 나누어 추천 도구와 실행 순서를 안내해드립니다. 역할을 선택하면 해당 역할에 맞는 맞춤 플랜이 자동으로 생성됩니다."
+                  title="플래너 사용법"
+                />
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                프로젝트 목표를 단계별로 나누어 필요한 도구와 실행 순서를 추천해드립니다.
+              </p>
+            </div>
             <Component />
           </div>
         );
@@ -181,6 +215,20 @@ export function AppContent() {
       case 'link-health':
         return (
           <div className="mb-4 sm:mb-6">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  링크 상태 확인
+                </h2>
+                <HelpTooltip
+                  content="모든 도구의 링크가 정상적으로 작동하는지 확인합니다. '정상'은 링크가 잘 작동하고, '깨짐'은 링크가 작동하지 않으며, '수정됨'은 자동으로 수정된 링크입니다."
+                  title="링크 상태"
+                />
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                모든 도구의 링크 상태를 한눈에 확인할 수 있습니다.
+              </p>
+            </div>
             <Component status={linkHealthStatus} />
           </div>
         );
@@ -188,6 +236,20 @@ export function AppContent() {
       case 'live-ops':
         return (
           <div className="mb-6 sm:mb-8">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  실시간 운영 상태
+                </h2>
+                <HelpTooltip
+                  content="도구들의 실시간 상태를 확인하고 관리할 수 있습니다. '링크 재검사' 버튼으로 모든 링크를 다시 확인하고, '새로고침'으로 최신 정보를 가져올 수 있습니다. 자동 새로고침을 켜면 주기적으로 상태를 확인합니다."
+                  title="운영 상태 관리"
+                />
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                도구들의 실시간 상태를 확인하고 관리할 수 있습니다.
+              </p>
+            </div>
             <Component status={linkHealthStatus} onCheckAll={checkAll} onRefresh={refreshResources} />
           </div>
         );
@@ -208,13 +270,20 @@ export function AppContent() {
       case 'resource-grid':
         return (
           <div className="mb-6 sm:mb-8">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="flex items-center gap-2 min-w-0">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   추천 도구 {filteredResources.length > 0 && `(${filteredResources.length}개)`}
                 </h2>
+                <HelpTooltip
+                  content="검색 결과나 필터에 맞는 도구들이 여기에 표시됩니다. 각 도구 카드를 클릭하면 자세한 정보와 설치 명령어를 확인할 수 있습니다. 스크롤하면 더 많은 도구를 볼 수 있어요."
+                  title="추천 도구"
+                />
               </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                검색 결과에 맞는 도구들이 표시됩니다. 각 도구를 클릭하면 자세한 정보와 설치 방법을 확인할 수 있습니다.
+              </p>
             </div>
             {loading ? (
               <div className="flex justify-center items-center py-12">
@@ -233,6 +302,20 @@ export function AppContent() {
         if (!loading && filteredResources.length > 1) {
           return (
             <div className="mb-6 sm:mb-8">
+              <div className="mb-2 sm:mb-3">
+                <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    관련 도구
+                  </h2>
+                  <HelpTooltip
+                    content="현재 선택한 도구와 유사하거나 함께 사용하기 좋은 도구들을 추천해드립니다. 태그, 플랫폼, 유형이 비슷한 도구들이 자동으로 표시됩니다."
+                    title="관련 도구 추천"
+                  />
+                </div>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  현재 도구와 함께 사용하기 좋은 관련 도구들을 추천해드립니다.
+                </p>
+              </div>
               <Component resources={filteredResources} />
             </div>
           );
@@ -248,9 +331,13 @@ export function AppContent() {
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   새 도구 추가하기
                 </h2>
+                <HelpTooltip
+                  content="GitHub 리포지토리, PyPI 패키지, 또는 문서 페이지의 URL을 입력하면 AI가 자동으로 분석하여 도구 정보를 추출합니다. 검색 기능을 사용하면 GitHub README나 Google 검색을 통해 도구를 찾을 수도 있어요."
+                  title="도구 추가 방법"
+                />
               </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                GitHub, PyPI, 또는 문서 URL을 입력하면 자동으로 분석하여 추가합니다.
+                GitHub, PyPI, 또는 문서 URL을 입력하면 자동으로 분석하여 추가합니다. 검색 기능으로도 도구를 찾을 수 있습니다.
               </p>
             </div>
             <Component />

@@ -719,7 +719,7 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
       if (import.meta.env.DEV) {
         console.warn('RL recommendation failed:', error);
       }
-      dispatch({ type: 'SET_SEARCH_QUERY', payload: mergedQuery });
+    dispatch({ type: 'SET_SEARCH_QUERY', payload: mergedQuery });
     }
   }, [state.resources, state.currentSearchQuery, rlService, sessionId]);
 
@@ -733,8 +733,8 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
     if (!resource) return;
 
     try {
-      // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
-      const status = await linkHealthService.checkLink(resource.url);
+    // Backend에서만 checking 상태 처리 (Frontend에는 표시 안 함)
+    const status = await linkHealthService.checkLink(resource.url);
       
       // 메타 정보 업데이트 (링크 상태 확인 시)
       const ingestionSimulator = new IngestionSimulator();
@@ -763,21 +763,21 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
           };
         }
       }
-      
-      if (status === 'broken') {
-        const fixed = await linkHealthService.autoFixBrokenLink(resource);
-        // Frontend에는 최종 결과만 표시
+    
+    if (status === 'broken') {
+      const fixed = await linkHealthService.autoFixBrokenLink(resource);
+      // Frontend에는 최종 결과만 표시
         await updateResource(id, {
           ...fixed,
           ...metadataUpdates,
         });
-      } else {
-        // Frontend에는 최종 결과만 표시
-        await updateResource(id, {
+    } else {
+      // Frontend에는 최종 결과만 표시
+      await updateResource(id, {
           ...metadataUpdates,
-          linkStatus: status,
-          lastCheckedAt: new Date().toISOString(),
-        });
+        linkStatus: status,
+        lastCheckedAt: new Date().toISOString(),
+      });
       }
     } catch (error) {
       // 에러를 조용히 처리 (콘솔에 출력하지 않음)

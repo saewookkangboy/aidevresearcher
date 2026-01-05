@@ -202,8 +202,8 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
         } catch (metaError) {
           // 개발 환경에서만 경고 출력
           if (import.meta.env.DEV) {
-            console.warn('Metadata update failed, continuing with URL update:', metaError);
-          }
+          console.warn('Metadata update failed, continuing with URL update:', metaError);
+        }
           // 실패 시 기본 메타 정보만 업데이트
           metadataUpdates = {
             meta: {
@@ -236,7 +236,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
     } catch (error) {
       // 개발 환경에서만 에러 로그 출력
       if (import.meta.env.DEV) {
-        console.error('Failed to update URL:', error);
+      console.error('Failed to update URL:', error);
       }
     } finally {
       setSaving(false);
@@ -345,7 +345,7 @@ export function ResourceCard({ resource, onViewDetails }: ResourceCardProps) {
           <>
             <div>
               <p className="font-medium text-gray-700 dark:text-gray-200">스냅샷</p>
-              <p>{resource.meta.title || 'N/A'}</p>
+              <p className="line-clamp-1">{resource.meta.title || resource.title || 'N/A'}</p>
             </div>
             <div>
               <p className="font-medium text-gray-700 dark:text-gray-200">상태/타입</p>

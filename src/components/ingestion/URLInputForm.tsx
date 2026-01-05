@@ -9,10 +9,12 @@ import { useURLIngestion } from '../../hooks/useURLIngestion';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { SuccessMessage } from '../common/SuccessMessage';
-import { Plus, CheckCircle2, XCircle, AlertCircle, Loader2, Rss } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, AlertCircle, Loader2, Rss, Search, Github, Star } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
 import { extractKeywords, inferCategoryFromQuery, inferResourceTypeFromQuery } from '../../utils/nlpMatcher';
 import { LinkHealthService } from '../../services/api/linkHealthService';
+import { GitHubSearchService, GitHubSearchResult } from '../../services/api/githubSearchService';
+import { GoogleSearchService, GoogleSearchResult } from '../../services/api/googleSearchService';
 import { LinkStatus } from '../../utils/types';
 
 export function URLInputForm() {
@@ -25,9 +27,20 @@ export function URLInputForm() {
   const [urlValidationStatus, setUrlValidationStatus] = useState<{ status: LinkStatus | 'idle' | 'validating'; message: string } | null>(null);
   const [feedUrl, setFeedUrl] = useState('https://tom-doerr.github.io/repo_posts/feed.xml');
   const [feedSuccess, setFeedSuccess] = useState(false);
+  
+  // 검색 관련 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'github' | 'google'>('github');
+  const [searchResults, setSearchResults] = useState<(GitHubSearchResult | GoogleSearchResult)[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [addingResults, setAddingResults] = useState<Set<string>>(new Set());
+  
   const { ingest, ingestFeed, loading, error, validating, feedProgress } = useURLIngestion();
   const { searchResources } = useResources();
   const linkHealthService = new LinkHealthService();
+  const githubSearchService = new GitHubSearchService();
+  const googleSearchService = new GoogleSearchService();
 
   // URL 실시간 검증
   const isCancelledRef = useRef(false);
@@ -160,6 +173,66 @@ export function URLInputForm() {
     }
   };
 
+  const handleSearch = async (e: FormEvent) => {
+    e.preventDefault();
+    setSearchError(null);
+    setSearchResults([]);
+    
+    if (!searchQuery.trim()) return;
+
+    setSearchLoading(true);
+    try {
+      let results: (GitHubSearchResult | GoogleSearchResult)[] = [];
+
+      if (searchType === 'github') {
+        // GitHub README 기반 검색
+        const githubResults = await githubSearchService.searchByReadme(searchQuery, 10);
+        results = githubResults;
+      } else {
+        // Google 검색에서 GitHub 리포지토리 필터링
+        const googleResults = await googleSearchService.searchGitHubRepos(searchQuery, 10);
+        const filtered = googleSearchService.extractGitHubUrls(googleResults);
+        
+        // URL 유효성 검증 (유효한 링크만 포함)
+        const validatedResults: GoogleSearchResult[] = [];
+        for (const result of filtered) {
+          const linkStatus = await linkHealthService.checkLink(result.url);
+          if (linkStatus === 'active') {
+            validatedResults.push(result);
+          }
+        }
+        results = validatedResults;
+      }
+
+      setSearchResults(results);
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : '검색 중 오류가 발생했습니다');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleAddSearchResult = async (resultUrl: string) => {
+    if (addingResults.has(resultUrl)) return;
+    
+    setAddingResults(prev => new Set(prev).add(resultUrl));
+    try {
+      const resource = await ingest(resultUrl);
+      if (resource) {
+        // 검색 결과에서 제거
+        setSearchResults(prev => prev.filter(r => r.url !== resultUrl));
+      }
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : '리소스 추가 중 오류가 발생했습니다');
+    } finally {
+      setAddingResults(prev => {
+        const next = new Set(prev);
+        next.delete(resultUrl);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -232,9 +305,131 @@ export function URLInputForm() {
         </form>
       </div>
 
+      {/* 도구 검색 섹션 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          도구 검색 및 추가
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          GitHub README 내용 또는 Google 검색을 통해 도구를 찾아 추가할 수 있습니다.
+        </p>
+        
+        <form onSubmit={handleSearch} className="space-y-4 mb-4">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="예: Python AI 라이브러리, React 컴포넌트, MCP 서버..."
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value as 'github' | 'google')}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="github">GitHub README</option>
+              <option value="google">Google 검색</option>
+            </select>
+            <button
+              type="submit"
+              disabled={searchLoading || !searchQuery.trim()}
+              className="px-6 py-2 bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              {searchLoading ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span>검색 중...</span>
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  <span>검색</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {searchError && (
+          <ErrorMessage message={searchError} variant="error" />
+        )}
+
+        {searchResults.length > 0 && (
+          <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              검색 결과 ({searchResults.length}개)
+            </p>
+            {searchResults.map((result) => {
+              const isAdding = addingResults.has(result.url);
+              const isGitHubResult = 'owner' in result;
+              const description = isGitHubResult 
+                ? (result as GitHubSearchResult).description 
+                : (result as GoogleSearchResult).snippet;
+              
+              return (
+                <div
+                  key={result.url}
+                  className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Github className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <a
+                          href={result.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline truncate"
+                        >
+                          {result.title}
+                        </a>
+                        {isGitHubResult && (result as GitHubSearchResult).stars && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            <span>{(result as GitHubSearchResult).stars!.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                        {description || '설명 없음'}
+                      </p>
+                      {isGitHubResult && (result as GitHubSearchResult).language && (
+                        <span className="inline-block text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                          {(result as GitHubSearchResult).language}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleAddSearchResult(result.url)}
+                      disabled={isAdding || loading}
+                      className="px-3 py-1.5 text-xs bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors flex-shrink-0"
+                    >
+                      {isAdding ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>추가 중...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-3 h-3" />
+                          <span>추가</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          새 도구 추가하기
+          새 도구 추가하기 (URL 직접 입력)
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

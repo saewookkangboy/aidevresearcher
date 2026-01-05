@@ -153,7 +153,7 @@ export class LinkHealthService {
         if (pathParts.length > 2) {
           // 리포지토리 루트로 시도
           return `https://github.com/${pathParts[0]}/${pathParts[1]}`;
-        }
+      }
         
         // 4. example.com 또는 잘못된 경로 처리
         if (brokenUrl.includes('example.com') || brokenUrl.includes('example/')) {

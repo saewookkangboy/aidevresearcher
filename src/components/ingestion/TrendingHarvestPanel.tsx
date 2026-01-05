@@ -4,6 +4,7 @@ import { TrendingCollector } from '../../services/simulation/trendingCollector';
 import { useResources } from '../../contexts/ResourceContext';
 import { SuccessMessage } from '../common/SuccessMessage';
 import { ErrorMessage } from '../common/ErrorMessage';
+import { HelpTooltip } from '../common/HelpTooltip';
 
 export function TrendingHarvestPanel() {
   const [keyword, setKeyword] = useState('');
@@ -42,6 +43,10 @@ export function TrendingHarvestPanel() {
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-5 h-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">키워드 기반 자동 수집</h3>
+        <HelpTooltip
+          content="키워드나 주제를 입력하면 GitHub나 소셜 미디어에서 인기 있는 관련 도구들을 자동으로 찾아서 수집해드립니다. 예: 'AI', 'React', 'Python' 등"
+          title="자동 수집 사용법"
+        />
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         키워드나 주제를 입력하면 GitHub/소셜 트렌드에서 상위 리소스를 자동으로 가져옵니다.

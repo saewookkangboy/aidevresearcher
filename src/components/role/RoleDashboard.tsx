@@ -10,6 +10,7 @@ import { useResources } from '../../contexts/ResourceContext';
 import { Resource, AgentRole } from '../../utils/types';
 import { ROLE_LABELS, ROLE_ICONS, ROLE_PREFERENCES } from '../../utils/roleConfigs';
 import { BarChart3, TrendingUp, Package, Star } from 'lucide-react';
+import { HelpTooltip } from '../common/HelpTooltip';
 
 interface RoleStatistics {
   totalResources: number;
@@ -143,9 +144,15 @@ export function RoleDashboard() {
             {roleIcon}
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {roleLabel} 대시보드
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                {roleLabel} 대시보드
+              </h2>
+              <HelpTooltip
+                content="선택한 역할에 맞는 맞춤형 통계와 추천 도구를 보여드립니다. 플랫폼별 분포, 타입별 분포, 인기 도구, 프레임워크별 분포 등을 한눈에 확인할 수 있습니다."
+                title="역할 대시보드"
+              />
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               맞춤형 리소스 통계 및 추천
             </p>
@@ -337,24 +344,63 @@ export function RoleDashboard() {
  * Frontend Developer 특화 섹션
  */
 function FrontendSpecificSection({ resources }: { resources: Resource[] }) {
-  // React/Vue/Angular별 통계
+  // 프레임워크별 통계 (platforms 배열과 텍스트 분석 결합)
   const frameworkStats = useMemo(() => {
-    const stats: Record<string, number> = { React: 0, Vue: 0, Angular: 0 };
+    const stats: Record<string, number> = {};
+    
+    // 주요 프레임워크 목록
+    const frameworks = [
+      'React', 'Vue', 'Angular', 'Svelte', 'Next.js', 'Nuxt', 'Remix',
+      'TypeScript', 'JavaScript', 'Node.js', 'Python', 'Go', 'Rust',
+      'Tailwind CSS', 'Bootstrap', 'Material-UI', 'Chakra UI', 'Ant Design'
+    ];
+    
     resources.forEach((resource) => {
-      const titleLower = resource.title.toLowerCase();
-      const descLower = resource.description.toLowerCase();
-      const tagsLower = resource.tags.join(' ').toLowerCase();
-      const allText = `${titleLower} ${descLower} ${tagsLower}`;
+      // platforms 배열에서 직접 확인
+      const platformMatches = new Set<string>();
+      resource.platforms.forEach(platform => {
+        const platformLower = platform.toLowerCase();
+        frameworks.forEach(fw => {
+          const fwLower = fw.toLowerCase();
+          // 정확한 매칭 또는 포함 관계 확인
+          if (platformLower === fwLower || 
+              platformLower.includes(fwLower) || 
+              fwLower.includes(platformLower)) {
+            platformMatches.add(fw);
+          }
+        });
+      });
       
-      if (allText.includes('react') && !allText.includes('angular')) {
-        stats.React++;
-      } else if (allText.includes('vue')) {
-        stats.Vue++;
-      } else if (allText.includes('angular')) {
-        stats.Angular++;
+      // 텍스트 분석 (platforms에 없을 경우)
+      if (platformMatches.size === 0) {
+        const titleLower = resource.title.toLowerCase();
+        const descLower = resource.description.toLowerCase();
+        const tagsLower = resource.tags.join(' ').toLowerCase();
+        const allText = `${titleLower} ${descLower} ${tagsLower}`;
+        
+        frameworks.forEach(fw => {
+          const fwLower = fw.toLowerCase();
+          // 정확한 단어 경계를 고려한 매칭
+          const regex = new RegExp(`\\b${fwLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          if (regex.test(allText)) {
+            platformMatches.add(fw);
+          }
+        });
       }
+      
+      // 통계 업데이트
+      platformMatches.forEach(fw => {
+        stats[fw] = (stats[fw] || 0) + 1;
+      });
     });
-    return stats;
+    
+    // 상위 프레임워크만 반환 (최소 1개 이상)
+    return Object.fromEntries(
+      Object.entries(stats)
+        .filter(([, count]) => count > 0)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10) // 상위 10개만
+    );
   }, [resources]);
 
   // UI 컴포넌트 라이브러리
@@ -412,20 +458,41 @@ function FrontendSpecificSection({ resources }: { resources: Resource[] }) {
 
   return (
     <div className="mt-6 space-y-6">
-      {/* React/Vue/Angular 통계 */}
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          🎨 프레임워크별 리소스 분포
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          {Object.entries(frameworkStats).map(([framework, count]) => (
-            <div key={framework} className="text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{framework}</p>
-            </div>
-          ))}
+      {/* 프레임워크별 통계 */}
+      {Object.keys(frameworkStats).length > 0 && (
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🎨 프레임워크별 리소스 분포
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {Object.entries(frameworkStats)
+              .sort(([, a], [, b]) => b - a)
+              .map(([framework, count]) => {
+                const total = resources.length;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                return (
+                  <div 
+                    key={framework} 
+                    className="text-center p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                  >
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{count}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 truncate" title={framework}>
+                      {framework}
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-500">
+                      {percentage.toFixed(1)}%
+                    </p>
+                  </div>
+                );
+              })}
+          </div>
+          {Object.keys(frameworkStats).length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              프레임워크 정보가 있는 리소스가 없습니다.
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       {/* UI 컴포넌트 라이브러리 */}
       {uiLibraries.length > 0 && (

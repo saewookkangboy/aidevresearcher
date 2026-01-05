@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { LinkHealthStatus } from '../../utils/types';
 import { Activity, RefreshCcw } from 'lucide-react';
+import { HelpTooltip } from '../common/HelpTooltip';
 
 interface LiveOpsBarProps {
   status: LinkHealthStatus;
@@ -30,6 +31,10 @@ export function LiveOpsBar({ status, onCheckAll, onRefresh }: LiveOpsBarProps) {
       <div className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-200">
         <Activity className="w-4 h-4 text-primary-600" />
         실시간 상태
+        <HelpTooltip
+          content="도구들의 실시간 상태를 확인하고 관리할 수 있습니다. '링크 재검사' 버튼으로 모든 링크를 다시 확인하고, '새로고침'으로 최신 정보를 가져올 수 있습니다. 자동 새로고침을 켜면 주기적으로 상태를 확인합니다."
+          title="실시간 상태 관리"
+        />
       </div>
       <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
         <span>총 {status.total}</span>

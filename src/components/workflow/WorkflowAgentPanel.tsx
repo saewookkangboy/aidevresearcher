@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { useResources } from '../../contexts/ResourceContext';
 import { Resource } from '../../utils/types';
 import { Sparkles, Play, PauseCircle, Terminal, ListChecks } from 'lucide-react';
+import { HelpTooltip } from '../common/HelpTooltip';
 
 type StepStatus = 'pending' | 'running' | 'done';
 
@@ -97,6 +98,10 @@ export function WorkflowAgentPanel() {
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary-600" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">워크플로우 에이전트</h2>
+          <HelpTooltip
+            content="검색한 도구를 자동으로 선택하고 실행하는 워크플로우를 만들어드립니다. 의도 파악 → 리소스 선택 → 실행 플로우 구성 → 명령 실행 → 결과 요약까지 자동으로 진행됩니다."
+            title="워크플로우 에이전트"
+          />
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-300">
           <Terminal className="w-4 h-4" />

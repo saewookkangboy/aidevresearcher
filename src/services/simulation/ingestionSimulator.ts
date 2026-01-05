@@ -165,7 +165,7 @@ export class IngestionSimulator {
     } catch (error) {
       // 개발 환경에서만 에러 로그 출력
       if (import.meta.env.DEV) {
-        console.error('Failed to update metadata:', error);
+      console.error('Failed to update metadata:', error);
       }
       // 실패 시 기존 메타 정보는 유지하고 기본 메타 정보만 업데이트
       return {

@@ -9,6 +9,7 @@ import { Resource } from '../../utils/types';
 import { ResourceCard } from './ResourceCard';
 import { LinkIcon } from 'lucide-react';
 import { RESOURCE_GRAPH } from '../../data/resourceGraph';
+import { HelpTooltip } from '../common/HelpTooltip';
 
 interface RelatedResourcesProps {
   resources: Resource[];
@@ -58,6 +59,10 @@ export function RelatedResources({ resources }: RelatedResourcesProps) {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           함께 쓰면 좋은 리소스
         </h3>
+        <HelpTooltip
+          content="현재 선택한 도구와 유사하거나 함께 사용하기 좋은 도구들을 추천해드립니다. 태그, 플랫폼, 유형이 비슷한 도구들이 자동으로 표시됩니다."
+          title="관련 도구 추천"
+        />
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
         기준 리소스: <span className="font-semibold">{related.anchor.title}</span>
