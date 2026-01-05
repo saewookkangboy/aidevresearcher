@@ -90,6 +90,7 @@ export class ReinforcementLearningService {
    * 상태 평가 (State Evaluation)
    * @deprecated Currently unused, kept for future use
    */
+  // @ts-ignore - Intentionally unused, kept for future use
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private evaluateState(_state: RLState): number {
     let score = 0;
@@ -117,8 +118,8 @@ export class ReinforcementLearningService {
     const actions: RLAction[] = [];
 
     for (const resource of resources) {
-      const stateKey = this.getStateKey(state, resource);
-      // Q-value는 현재 사용되지 않지만 향후 최적 행동 선택에 사용될 수 있음
+      // State key와 Q-value는 현재 사용되지 않지만 향후 최적 행동 선택에 사용될 수 있음
+      // const stateKey = this.getStateKey(state, resource);
       // const qValue = this.model.qTable[stateKey] || 0;
 
       // ε-greedy: 랜덤 탐험 또는 최적 행동

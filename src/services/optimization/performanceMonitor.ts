@@ -212,7 +212,7 @@ class PerformanceMonitor {
     roles.forEach((role: AgentRole) => {
       const perf = this.getRolePerformance(role);
       if (perf.count > 0) {
-        rolePerformance[role] = perf;
+        rolePerformance[role as string] = perf;
       }
     });
 
