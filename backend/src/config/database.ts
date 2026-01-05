@@ -41,7 +41,7 @@ pool.on('connect', () => {
   console.log('✅ PostgreSQL 데이터베이스에 연결되었습니다.');
 });
 
-pool.on('error', (err) => {
+pool.on('error', (err: Error) => {
   console.error('❌ PostgreSQL 연결 오류:', err);
   process.exit(-1);
 });

@@ -9,7 +9,9 @@ import { pool } from '../config/database';
 import fs from 'fs';
 import path from 'path';
 
-const SCHEMA_FILE = path.join(__dirname, 'schema.sql');
+// CommonJS에서 __dirname 사용
+const __dirname = path.resolve();
+const SCHEMA_FILE = path.join(__dirname, 'src', 'migrations', 'schema.sql');
 
 async function migrate() {
   try {
@@ -36,6 +38,7 @@ async function migrate() {
 }
 
 // 스크립트 직접 실행 시
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 if (require.main === module) {
   migrate();
 }

@@ -61,37 +61,30 @@ npm run build
 ## 🛠 기술 스택
 
 - **Frontend:** React 18, Vite, TypeScript
+- **Backend:** Express.js, TypeScript, PostgreSQL
 - **Styling:** Tailwind CSS
 - **Icons:** Lucide React
 - **State Management:** React Context API
-- **Storage:** LocalStorage (MVP)
+- **Storage:** LocalStorage (MVP) / PostgreSQL (프로덕션)
 
 ## 📁 프로젝트 구조
 
 ```
-src/
-├── components/              # React 컴포넌트
-│   ├── role/               # Role 관련 컴포넌트
-│   ├── resource/           # 리소스 표시 컴포넌트
-│   ├── optimization/       # 최적화 관련 컴포넌트
+vibe-coding-navigator/
+├── src/                    # 프론트엔드 소스
+│   ├── components/         # React 컴포넌트
+│   ├── contexts/           # Context API
+│   ├── hooks/              # 커스텀 훅
+│   ├── services/           # 비즈니스 로직
 │   └── ...
-├── contexts/               # Context API
-│   ├── RoleContext.tsx     # Role 상태 관리
-│   └── ...
-├── hooks/                  # 커스텀 훅
-│   ├── useRoleFilter.ts    # Role 기반 필터링
-│   └── ...
-├── services/              # 비즈니스 로직
-│   ├── optimization/      # 성능 최적화 서비스
-│   │   ├── rolePerformanceOptimizer.ts  # Role 성능 최적화
-│   │   ├── performanceMonitor.ts        # 성능 모니터링
-│   │   └── autoOptimizer.ts             # 자동 최적화
-│   └── ...
-├── utils/                 # 유틸리티 함수
-│   ├── roleConfigs.ts     # Role 설정
-│   └── ...
-├── data/                  # Mock 데이터
-└── styles/                # 전역 스타일
+├── backend/                # 백엔드 서버
+│   ├── src/
+│   │   ├── config/         # 데이터베이스 설정
+│   │   ├── routes/         # API 라우터
+│   │   ├── migrations/     # 데이터베이스 마이그레이션
+│   │   └── index.ts        # Express 서버
+│   └── package.json
+└── docs/                   # 문서
 ```
 
 ## 🚀 배포
@@ -122,6 +115,16 @@ railway up
 
 자세한 배포 가이드는 [docs/VERCEL_RAILWAY_SETUP.md](./docs/VERCEL_RAILWAY_SETUP.md)를 참고하세요.
 
+### Railway PostgreSQL 설정
+
+프로덕션 환경에서 PostgreSQL을 사용하려면:
+
+1. Railway에서 PostgreSQL 서비스 추가
+2. 백엔드 서비스 배포
+3. 데이터베이스 마이그레이션 실행
+
+자세한 설정 가이드는 [docs/RAILWAY_POSTGRESQL_SETUP.md](./docs/RAILWAY_POSTGRESQL_SETUP.md)를 참고하세요.
+
 ## 📝 개발 로드맵
 
 - [x] Phase 1: MVP (기본 기능)
@@ -136,6 +139,7 @@ railway up
 - [Role 기능 가이드](./docs/ROLE_FEATURE.md) - Role별 맞춤 추천 기능 상세 설명
 - [성능 최적화 가이드](./docs/PERFORMANCE_OPTIMIZATION.md) - 성능 최적화 및 모니터링 시스템
 - [배포 가이드](./docs/VERCEL_RAILWAY_SETUP.md) - Vercel/Railway 배포 방법
+- [Railway PostgreSQL 설정](./docs/RAILWAY_POSTGRESQL_SETUP.md) - Railway PostgreSQL 및 백엔드 서버 설정
 
 ## 📄 라이선스
 

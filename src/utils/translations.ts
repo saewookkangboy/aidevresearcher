@@ -290,6 +290,9 @@ export const translations = {
     'quickStart.title': 'Get Started',
     'quickStart.description': 'First, select your role to get customized tool recommendations. You can search without selecting a role.',
     'quickStart.guide': 'View Guide',
+    
+    // Common Advanced
+    'common.advanced': 'Advanced Features',
   },
 };
 

@@ -43,7 +43,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    const translation = translations[language]?.[key] || translations['en']?.[key] || key;
+    const langTranslations = translations[language] as Record<string, string>;
+    const enTranslations = translations['en'] as Record<string, string>;
+    const translation = langTranslations?.[key] || enTranslations?.[key] || key;
     
     if (params) {
       return Object.entries(params).reduce(
