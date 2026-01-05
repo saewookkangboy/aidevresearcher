@@ -5,7 +5,7 @@
  */
 
 import { Resource } from '../../utils/types';
-import { DatabaseService, UserInteraction, RecommendationLog } from '../database/databaseService';
+import { DatabaseService, UserInteraction } from '../database/databaseService';
 
 export interface RLState {
   resources: Resource[];
@@ -88,20 +88,22 @@ export class ReinforcementLearningService {
 
   /**
    * 상태 평가 (State Evaluation)
+   * @deprecated Currently unused, kept for future use
    */
-  private evaluateState(state: RLState): number {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private evaluateState(_state: RLState): number {
     let score = 0;
 
     // 리소스 품질 점수
-    const qualityScore = state.resources.reduce((sum, r) => {
+    const qualityScore = _state.resources.reduce((sum, r) => {
       return sum + (r.stars || 0) * 0.001 + (r.isVerified ? 0.1 : 0);
     }, 0);
 
     // 사용자 히스토리 점수
-    const historyScore = state.userHistory.length * 0.01;
+    const historyScore = _state.userHistory.length * 0.01;
 
     // 컨텍스트 매칭 점수
-    const contextScore = Object.keys(state.context).length * 0.05;
+    const contextScore = Object.keys(_state.context).length * 0.05;
 
     score = qualityScore + historyScore + contextScore;
     return score;
@@ -116,7 +118,8 @@ export class ReinforcementLearningService {
 
     for (const resource of resources) {
       const stateKey = this.getStateKey(state, resource);
-      const qValue = this.model.qTable[stateKey] || 0;
+      // Q-value는 현재 사용되지 않지만 향후 최적 행동 선택에 사용될 수 있음
+      // const qValue = this.model.qTable[stateKey] || 0;
 
       // ε-greedy: 랜덤 탐험 또는 최적 행동
       if (Math.random() < epsilon) {
@@ -341,7 +344,7 @@ export class ReinforcementLearningService {
   private getRecommendationReason(
     resource: Resource,
     state: RLState,
-    action: RLAction
+    _action: RLAction
   ): string {
     const reasons: string[] = [];
 

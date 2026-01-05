@@ -203,13 +203,13 @@ class PerformanceMonitor {
    */
   generateReport(): {
     totalMetrics: number;
-    rolePerformance: Record<string, ReturnType<typeof this.getRolePerformance>>;
+    rolePerformance: Record<string, { average: number; count: number; min: number; max: number }>;
     topSlowOperations: Array<{ name: string; average: number; count: number }>;
   } {
-    const rolePerformance: Record<string, ReturnType<typeof this.getRolePerformance>> = {};
+    const rolePerformance: Record<string, { average: number; count: number; min: number; max: number }> = {};
     const roles: AgentRole[] = ['frontend', 'backend', 'pm', 'fullstack', 'devops', 'designer'];
 
-    roles.forEach(role => {
+    roles.forEach((role: AgentRole) => {
       const perf = this.getRolePerformance(role);
       if (perf.count > 0) {
         rolePerformance[role] = perf;

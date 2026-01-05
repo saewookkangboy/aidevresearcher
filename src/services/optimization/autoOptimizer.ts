@@ -5,7 +5,6 @@
  */
 
 import { AgentRole } from '../../utils/types';
-import { rolePerformanceOptimizer } from './rolePerformanceOptimizer';
 import { performanceMonitor } from './performanceMonitor';
 
 /**

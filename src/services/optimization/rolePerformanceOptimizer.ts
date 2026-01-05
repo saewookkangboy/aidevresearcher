@@ -193,7 +193,7 @@ class RolePerformanceOptimizer {
    */
   private getMatchingResourcesByPlatform(
     platforms: string[],
-    allResources: Resource[]
+    _allResources: Resource[]
   ): Set<number | string> {
     if (!this.resourceIndex) {
       return new Set();
@@ -217,7 +217,7 @@ class RolePerformanceOptimizer {
    */
   private getMatchingResourcesByType(
     types: string[],
-    allResources: Resource[]
+    _allResources: Resource[]
   ): Set<number | string> {
     if (!this.resourceIndex) {
       return new Set();
@@ -241,7 +241,7 @@ class RolePerformanceOptimizer {
    */
   private getMatchingResourcesByTags(
     tags: string[],
-    allResources: Resource[]
+    _allResources: Resource[]
   ): Set<number | string> {
     if (!this.resourceIndex) {
       return new Set();
@@ -265,7 +265,7 @@ class RolePerformanceOptimizer {
    */
   private getMatchingResourcesByKeywords(
     keywords: string[],
-    allResources: Resource[]
+    _allResources: Resource[]
   ): Set<number | string> {
     if (!this.resourceIndex) {
       return new Set();

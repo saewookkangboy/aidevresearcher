@@ -4,7 +4,7 @@
  * This software was developed with assistance from Cursor AI and Codex.
  */
 
-import { Resource, InteractionType, ActivityEvent } from '../../utils/types';
+import { Resource, InteractionType } from '../../utils/types';
 
 // 환경 변수에서 API URL 가져오기 (백엔드 API가 있는 경우)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
