@@ -8,7 +8,8 @@ import { RealTimeTicker } from '../status/RealTimeTicker';
 import { RoleSelector } from '../role/RoleSelector';
 import { useAutoResearch } from '../../hooks/useAutoResearch';
 import { useDarkMode } from '../../hooks/useDarkMode';
-import { Sparkles, Moon, Sun, HelpCircle } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { Sparkles, Moon, Sun, HelpCircle, Languages } from 'lucide-react';
 
 interface HeaderProps {
   onShowHelp?: () => void;
@@ -17,6 +18,7 @@ interface HeaderProps {
 export function Header({ onShowHelp }: HeaderProps = {}) {
   const { status } = useAutoResearch();
   const { isDark, toggle } = useDarkMode();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
@@ -27,9 +29,9 @@ export function Header({ onShowHelp }: HeaderProps = {}) {
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
-                AI Dev. Researcher
+                {t('header.title')}
               </h1>
-              <span className="hidden sm:inline text-xs text-gray-500 dark:text-gray-400 italic">Don't search, Just Vibe.</span>
+              <span className="hidden sm:inline text-xs text-gray-500 dark:text-gray-400 italic">{t('header.tagline')}</span>
             </div>
           </div>
           
@@ -48,13 +50,23 @@ export function Header({ onShowHelp }: HeaderProps = {}) {
               <RealTimeTicker status={status} />
             </div>
             
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+              className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors touch-manipulation"
+              aria-label={t('language.toggle')}
+              title={t('language.toggle')}
+            >
+              <Languages className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+            
             {/* Help Button - 터치 친화적 크기 */}
             {onShowHelp && (
               <button
                 onClick={onShowHelp}
                 className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors touch-manipulation"
-                aria-label="도움말 보기"
-                title="사용 가이드"
+                aria-label={t('header.help')}
+                title={t('header.help')}
               >
                 <HelpCircle className="w-5 h-5 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
               </button>
@@ -64,7 +76,7 @@ export function Header({ onShowHelp }: HeaderProps = {}) {
             <button
               onClick={toggle}
               className="p-2 sm:p-2.5 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors touch-manipulation"
-              aria-label="다크모드 토글"
+              aria-label={t('header.darkMode')}
             >
               {isDark ? (
                 <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />

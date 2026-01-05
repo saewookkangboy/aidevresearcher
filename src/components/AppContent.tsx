@@ -8,6 +8,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useResources } from '../contexts/ResourceContext';
 import { useRole } from '../contexts/RoleContext';
 import { useAdmin } from '../contexts/AdminContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useLinkHealth } from '../hooks/useLinkHealth';
 import { useAutoResearch } from '../hooks/useAutoResearch';
 import { LINK_HEALTH_CHECK_DELAY } from '../utils/constants';
@@ -58,6 +59,7 @@ export function AppContent() {
   const { start } = useAutoResearch();
   const { currentRole } = useRole();
   const { layoutConfig } = useAdmin();
+  const { t } = useLanguage();
   const [dismissedError, setDismissedError] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
   useBehaviorRanking(filteredResources);
@@ -111,19 +113,19 @@ export function AppContent() {
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      시작하기
+                      {t('quickStart.title')}
                     </h2>
                   </div>
                   <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
-                    먼저 당신의 역할을 선택하면 맞춤 도구를 추천해드립니다. 역할을 선택하지 않아도 검색은 가능합니다.
+                    {t('quickStart.description')}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowQuickStart(true)}
                       className="text-xs sm:text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium min-h-[44px] sm:min-h-0 px-2 touch-manipulation"
                     >
-                      <span className="hidden sm:inline">가이드 보기 →</span>
-                      <span className="sm:hidden">가이드</span>
+                      <span className="hidden sm:inline">{t('quickStart.guide')} →</span>
+                      <span className="sm:hidden">{t('quickStart.guide')}</span>
                     </button>
                   </div>
                 </div>
@@ -147,18 +149,18 @@ export function AppContent() {
               <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  무엇을 찾고 계신가요?
+                  {t('search.title')}
                 </h2>
                 <HelpTooltip
-                  content="자연스러운 문장으로 검색하면 AI가 의미를 이해해서 관련 도구를 찾아드립니다. 예: '이미지 분석 봇 만들고 싶어요', 'Python으로 AI 라이브러리 찾기' 등"
-                  title="검색 사용법"
+                  content={t('search.help')}
+                  title={t('search.title')}
                 />
               </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                자연스러운 문장으로 검색하세요. 예: "이미지 분석 봇 만들기", "Python AI 라이브러리", "웹사이트 SEO 개선"
+                {t('search.description')}
               </p>
             </div>
-            <Component onSearch={searchResources} placeholder="예: 이미지 분석 봇 만들고 싶어, Python AI 라이브러리..." />
+            <Component onSearch={searchResources} placeholder={t('search.placeholder')} />
           </div>
         );
 

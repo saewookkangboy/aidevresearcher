@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { ResourceProvider } from './contexts/ResourceContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { AdminProvider } from './contexts/AdminContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { AppContent } from './components/AppContent';
 import { autoOptimizer } from './services/optimization/autoOptimizer';
 
@@ -23,13 +24,15 @@ function App() {
   }, []);
 
   return (
-    <ResourceProvider>
-      <RoleProvider>
-        <AdminProvider>
-          <AppContent />
-        </AdminProvider>
-      </RoleProvider>
-    </ResourceProvider>
+    <LanguageProvider>
+      <ResourceProvider>
+        <RoleProvider>
+          <AdminProvider>
+            <AppContent />
+          </AdminProvider>
+        </RoleProvider>
+      </ResourceProvider>
+    </LanguageProvider>
   );
 }
 
