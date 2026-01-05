@@ -1118,6 +1118,39 @@ function FullStackSpecificSection({ resources }: { resources: Resource[] }) {
     return stats;
   }, [resources]);
 
+  // 보일러플레이트 추천
+  const boilerplates = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          r.type === 'STARTER_KIT' ||
+          text.includes('boilerplate') ||
+          text.includes('starter') ||
+          text.includes('template')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
+  // API 클라이언트 라이브러리
+  const apiClients = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('api client') ||
+          text.includes('axios') ||
+          text.includes('fetch') ||
+          text.includes('trpc') ||
+          text.includes('graphql client')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
   return (
     <div className="mt-6 space-y-6">
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
@@ -1133,6 +1166,58 @@ function FullStackSpecificSection({ resources }: { resources: Resource[] }) {
           ))}
         </div>
       </div>
+
+      {boilerplates.length > 0 && (
+        <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🎯 스택별 보일러플레이트 추천
+          </h3>
+          <div className="space-y-2">
+            {boilerplates.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {apiClients.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🔌 API 클라이언트 라이브러리 (tRPC, GraphQL Codegen)
+          </h3>
+          <div className="space-y-2">
+            {apiClients.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1158,6 +1243,56 @@ function DevOpsSpecificSection({ resources }: { resources: Resource[] }) {
       .slice(0, 5);
   }, [resources]);
 
+  // IaC 도구
+  const iacTools = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('terraform') ||
+          text.includes('cloudformation') ||
+          text.includes('pulumi') ||
+          text.includes('iac') ||
+          text.includes('infrastructure as code')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
+  // 컨테이너 오케스트레이션
+  const containerTools = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('kubernetes') ||
+          text.includes('k8s') ||
+          text.includes('docker swarm') ||
+          text.includes('nomad')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
+  // 보안 스캔 도구
+  const securityScanTools = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('security scan') ||
+          text.includes('vulnerability') ||
+          text.includes('snyk') ||
+          text.includes('trivy') ||
+          text.includes('clair')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
   return (
     <div className="mt-6 space-y-6">
       {cicdTools.length > 0 && (
@@ -1167,6 +1302,84 @@ function DevOpsSpecificSection({ resources }: { resources: Resource[] }) {
           </h3>
           <div className="space-y-2">
             {cicdTools.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {iacTools.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🏗️ Infrastructure as Code (IaC) 도구
+          </h3>
+          <div className="space-y-2">
+            {iacTools.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {containerTools.length > 0 && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🐳 컨테이너 오케스트레이션 (Kubernetes, Docker Swarm)
+          </h3>
+          <div className="space-y-2">
+            {containerTools.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {securityScanTools.length > 0 && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🔒 컨테이너 보안 스캔 도구
+          </h3>
+          <div className="space-y-2">
+            {securityScanTools.map((resource) => (
               <div
                 key={resource.id}
                 className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
@@ -1210,6 +1423,48 @@ function DesignerSpecificSection({ resources }: { resources: Resource[] }) {
       .slice(0, 5);
   }, [resources]);
 
+  // Figma 플러그인
+  const figmaPlugins = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return text.includes('figma') && (text.includes('plugin') || text.includes('extension'));
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
+  // 디자인 토큰 관리
+  const designTokenTools = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('design token') ||
+          text.includes('design system') ||
+          text.includes('style guide')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
+  // 접근성 도구
+  const accessibilityTools = useMemo(() => {
+    return resources
+      .filter((r) => {
+        const text = `${r.title} ${r.description} ${r.tags.join(' ')}`.toLowerCase();
+        return (
+          text.includes('accessibility') ||
+          text.includes('a11y') ||
+          text.includes('color contrast') ||
+          text.includes('wcag')
+        );
+      })
+      .sort((a, b) => (b.stars || 0) - (a.stars || 0))
+      .slice(0, 5);
+  }, [resources]);
+
   return (
     <div className="mt-6 space-y-6">
       {designTools.length > 0 && (
@@ -1219,6 +1474,84 @@ function DesignerSpecificSection({ resources }: { resources: Resource[] }) {
           </h3>
           <div className="space-y-2">
             {designTools.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {figmaPlugins.length > 0 && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🎨 Figma 플러그인 추천
+          </h3>
+          <div className="space-y-2">
+            {figmaPlugins.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {designTokenTools.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🎯 디자인 토큰 관리 시스템
+          </h3>
+          <div className="space-y-2">
+            {designTokenTools.map((resource) => (
+              <div
+                key={resource.id}
+                className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {resource.title}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{(resource.stars || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {accessibilityTools.length > 0 && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            ♿ 접근성 테스트 도구 (색상 대비, WCAG)
+          </h3>
+          <div className="space-y-2">
+            {accessibilityTools.map((resource) => (
               <div
                 key={resource.id}
                 className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
