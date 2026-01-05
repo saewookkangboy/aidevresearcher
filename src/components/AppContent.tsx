@@ -28,6 +28,7 @@ import { WorkflowAgentPanel } from './workflow/WorkflowAgentPanel';
 import { OptimizationBatch } from './optimization/OptimizationBatch';
 import { RelatedResources } from './resource/RelatedResources';
 import { ActivityFeed } from './activity/ActivityFeed';
+import { RoleDashboard } from './role/RoleDashboard';
 import { useBehaviorRanking } from '../hooks/useBehaviorRanking';
 import { Sparkles, Search, Target, BookOpen, HelpCircle } from 'lucide-react';
 
@@ -37,6 +38,7 @@ const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   SearchBar: SearchBar,
   FilterPanel: FilterPanel,
   GoalPlanner: GoalPlanner,
+  RoleDashboard: RoleDashboard,
   LinkHealthIndicator: LinkHealthIndicator,
   LiveOpsBar: LiveOpsBar,
   ErrorMessage: ErrorMessage,
@@ -163,6 +165,13 @@ export function AppContent() {
         );
 
       case 'goal-planner':
+        return (
+          <div className="mb-6 sm:mb-8">
+            <Component />
+          </div>
+        );
+
+      case 'role-dashboard':
         return (
           <div className="mb-6 sm:mb-8">
             <Component />
