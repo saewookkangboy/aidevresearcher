@@ -77,7 +77,7 @@ export function getTranslatedLabel(key: string, language: 'ko' | 'en' = 'en'): s
 
   const langTranslations = translations[language];
   if (langTranslations && key in langTranslations) {
-    return langTranslations[key];
+    return langTranslations[key as keyof typeof langTranslations];
   }
   return key;
 }
