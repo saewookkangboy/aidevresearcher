@@ -6,11 +6,15 @@
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../config/database';
+import { logger } from '../utils/logger';
+import { validateBody, validateParams } from '../middleware/validation';
+import { apiLimiter } from '../middleware/rateLimiter';
+import { CreateInteractionSchema, ResourceIdParamSchema } from '../validators/interactionValidator';
 
 const router = Router();
 
 // 상호작용 기록
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', apiLimiter, validateBody(CreateInteractionSchema), async (req: Request, res: Response) => {
   try {
     const {
       id,
@@ -41,29 +45,31 @@ router.post('/', async (req: Request, res: Response) => {
         role,
         session_id,
         user_agent,
-        referrer,
+        referrer || null,
       ]
     );
 
+    logger.info('Interaction recorded', { resource_id, interaction_type });
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('상호작용 기록 오류:', error);
-    res.status(500).json({ error: '상호작용을 기록하는 중 오류가 발생했습니다.' });
+    logger.error('상호작용 기록 오류', { error, body: req.body });
+    throw error;
   }
 });
 
 // 리소스별 상호작용 조회
-router.get('/resource/:resourceId', async (req: Request, res: Response) => {
+router.get('/resource/:resourceId', apiLimiter, validateParams(ResourceIdParamSchema), async (req: Request, res: Response) => {
   try {
     const { resourceId } = req.params;
     const result = await pool.query(
       'SELECT * FROM user_interactions WHERE resource_id = $1 ORDER BY timestamp DESC',
       [resourceId]
     );
+    logger.info('Interactions fetched', { resourceId, count: result.rows.length });
     res.json(result.rows);
   } catch (error) {
-    console.error('상호작용 조회 오류:', error);
-    res.status(500).json({ error: '상호작용을 조회하는 중 오류가 발생했습니다.' });
+    logger.error('상호작용 조회 오류', { error, resourceId: req.params.resourceId });
+    throw error;
   }
 });
 

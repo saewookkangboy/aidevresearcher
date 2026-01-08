@@ -1,44 +1,16 @@
-import { useState } from 'react';
-import { Sparkles, Loader2, Upload } from 'lucide-react';
-import { TrendingCollector } from '../../services/simulation/trendingCollector';
+import { Sparkles } from 'lucide-react';
 import { useResources } from '../../contexts/ResourceContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { SuccessMessage } from '../common/SuccessMessage';
-import { ErrorMessage } from '../common/ErrorMessage';
 import { HelpTooltip } from '../common/HelpTooltip';
 
 export function TrendingHarvestPanel() {
   const { t } = useLanguage();
-  const [keyword, setKeyword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { addResources, addActivity } = useResources();
-  const collector = new TrendingCollector();
-
-  const handleCollect = async () => {
-    if (!keyword.trim()) return;
-    setLoading(true);
-    setSuccess(null);
-    setError(null);
-    try {
-      const harvested = await collector.collect(keyword.trim());
-      await addResources(harvested);
-      addActivity({
-        id: `activity_${Date.now()}`,
-        type: 'ingest',
-        message: `트렌드 수집 완료 (${keyword}) - ${harvested.length}개`,
-        timestamp: new Date().toISOString(),
-      });
-      setSuccess(`${harvested.length}개의 리소스를 자동 수집했습니다.`);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : t('trending.error') || t('common.error');
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { resources } = useResources();
+  
+  // Backend에서 자동으로 수집된 트렌딩 리소스 개수 계산
+  const trendingResources = resources.filter(r => 
+    r.tags?.includes('trending') || r.sourceType === 'GITHUB'
+  );
 
   return (
     <div className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
@@ -46,40 +18,16 @@ export function TrendingHarvestPanel() {
         <Sparkles className="w-5 h-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('trending.title')}</h3>
         <HelpTooltip
-          content={t('trending.help')}
+          content={t('trending.help') || 'Backend에서 자동으로 도구 및 리소스를 수집하고 있습니다. 수집된 결과가 리소스 그리드에 표시됩니다.'}
           title={t('trending.title')}
         />
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        {t('trending.description')}
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        {t('trending.description') || '도구 및 리소스 수집은 Backend에서 자동으로 진행되고 있습니다.'}
       </p>
-      <div className="flex flex-col md:flex-row gap-3">
-        <input
-          type="text"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder={t('trending.placeholder')}
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-        />
-        <button
-          onClick={handleCollect}
-          disabled={loading || !keyword.trim()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {loading ? t('trending.collecting') : t('trending.collect')}
-        </button>
-      </div>
-      {success && (
-        <div className="mt-3">
-          <SuccessMessage message={success} />
-        </div>
-      )}
-      {error && (
-        <div className="mt-3">
-          <ErrorMessage message={error} />
-        </div>
-      )}
+      <p className="text-xs text-gray-500 dark:text-gray-500">
+        현재 수집된 트렌딩 리소스: <span className="font-semibold text-primary-600 dark:text-primary-400">{trendingResources.length}개</span>
+      </p>
     </div>
   );
 }

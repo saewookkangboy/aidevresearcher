@@ -6,11 +6,15 @@
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../config/database';
+import { logger } from '../utils/logger';
+import { validateBody } from '../middleware/validation';
+import { apiLimiter } from '../middleware/rateLimiter';
+import { CreateRecommendationSchema } from '../validators/recommendationValidator';
 
 const router = Router();
 
 // 추천 로그 기록
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', apiLimiter, validateBody(CreateRecommendationSchema), async (req: Request, res: Response) => {
   try {
     const {
       id,
@@ -18,7 +22,7 @@ router.post('/', async (req: Request, res: Response) => {
       session_id,
       query,
       role,
-      recommended_resources,
+      recommended_resources = [],
       recommendation_scores,
       model_id,
       context,
@@ -36,17 +40,18 @@ router.post('/', async (req: Request, res: Response) => {
         session_id,
         query,
         role,
-        recommended_resources || [],
+        recommended_resources,
         recommendation_scores ? JSON.stringify(recommendation_scores) : null,
         model_id,
         context ? JSON.stringify(context) : null,
       ]
     );
 
+    logger.info('Recommendation logged', { query, role, resourceCount: recommended_resources.length });
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('추천 로그 기록 오류:', error);
-    res.status(500).json({ error: '추천 로그를 기록하는 중 오류가 발생했습니다.' });
+    logger.error('추천 로그 기록 오류', { error, body: req.body });
+    throw error;
   }
 });
 

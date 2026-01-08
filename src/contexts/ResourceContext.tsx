@@ -7,6 +7,7 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { Resource, SearchQuery, AutoResearchStatus, LinkHealthStatus, ActivityEvent, InteractionType, LinkStatus } from '../utils/types';
 import { LocalStorageService } from '../services/storage/localStorageService';
+import { ResourceApiService } from '../services/api/resourceApiService';
 import { LinkHealthService } from '../services/api/linkHealthService';
 import { ResourceValidator } from '../services/api/resourceValidator';
 import { ExtensionLinkFixer } from '../services/api/extensionLinkFixer';
@@ -70,6 +71,7 @@ type ResourceAction =
 const ResourceContext = createContext<ResourceContextType | undefined>(undefined);
 
 const storageService = new LocalStorageService();
+const resourceApiService = new ResourceApiService();
 const linkHealthService = new LinkHealthService();
 const autoResearchSimulator = new AutoResearchSimulator();
 const dbService = new DatabaseService();
@@ -477,44 +479,78 @@ export function ResourceProvider({ children }: { children: ReactNode }) {
   };
 
   const loadResources = async () => {
-    dispatch({ type: 'SET_LOADING', payload: true });
+    // 초기 로딩 시 loading 상태를 표시하지 않음 (백그라운드에서 진행)
     try {
-      let storedResources = await storageService.loadResources();
+      // Backend API를 통해 리소스 로드
+      let resources: Resource[] = [];
       
-      // localStorage에 저장된 리소스와 mockResources 병합
-      // URL 기준으로 중복 체크하여 새로운 항목만 추가
-      const existingUrls = new Set(storedResources.map(r => r.url));
-      const newMockResources = mockResources.filter(r => !existingUrls.has(r.url));
+      try {
+        resources = await resourceApiService.loadResources();
+        
+        // Backend에서 받은 리소스 형식 변환 (snake_case -> camelCase)
+        resources = resources.map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          type: r.type,
+          description: r.description,
+          platforms: Array.isArray(r.platforms) ? r.platforms : [],
+          tags: Array.isArray(r.tags) ? r.tags : [],
+          command: r.command || '',
+          url: r.url,
+          stars: r.stars,
+          isVerified: r.is_verified || false,
+          source: r.source || '',
+          sourceType: r.source_type || 'USER',
+          linkStatus: (r.link_status || 'checking') as LinkStatus,
+          meta: typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta,
+          socialMetrics: typeof r.social_metrics === 'string' ? JSON.parse(r.social_metrics) : r.social_metrics,
+          createdAt: r.created_at || new Date().toISOString(),
+          updatedAt: r.updated_at || new Date().toISOString(),
+          lastCheckedAt: r.last_checked_at,
+        }));
+      } catch (apiError) {
+        // Backend API 실패 시 localStorage에서 로드 (fallback)
+        console.warn('Backend API 로드 실패, localStorage에서 로드', apiError);
+        const storedResources = await storageService.loadResources();
+        
+        // localStorage에 저장된 리소스와 mockResources 병합
+        const existingUrls = new Set(storedResources.map(r => r.url));
+        const newMockResources = mockResources.filter(r => !existingUrls.has(r.url));
+        
+        if (storedResources.length === 0) {
+          resources = mockResources;
+        } else {
+          resources = [...newMockResources, ...storedResources];
+        }
+      }
       
-      // 새로운 mockResources를 기존 데이터 앞에 추가 (최신순 유지)
-      let resources: Resource[];
-      if (storedResources.length === 0) {
-        // localStorage가 비어있으면 mockResources만 사용
+      // 리소스가 없는 경우에만 mockResources 사용
+      if (resources.length === 0) {
         resources = mockResources;
-      } else {
-        // 기존 데이터가 있으면 새로운 mockResources를 앞에 추가
-        resources = [...newMockResources, ...storedResources];
       }
       
-      // 리소스 로드 후 자동으로 링크 검증 및 수정
-      const validatedResources = await validateAndFixResources(resources);
+      // 리소스 로드 후 자동으로 링크 검증 및 수정 (백그라운드에서 진행)
+      validateAndFixResources(resources).then((validatedResources) => {
+        const normalized = normalizeResourceLinks(validatedResources);
+        dispatch({ type: 'SET_RESOURCES', payload: normalized });
+        updateLinkHealthStatus(normalized);
+      }).catch((error) => {
+        // 검증 실패 시 원본 리소스 사용
+        console.warn('리소스 검증 실패', error);
+        const normalized = normalizeResourceLinks(resources);
+        dispatch({ type: 'SET_RESOURCES', payload: normalized });
+        updateLinkHealthStatus(normalized);
+      });
       
-      // 병합된 데이터를 localStorage에 저장 (새로운 항목이 있거나 수정된 경우)
-      const hasChanges = newMockResources.length > 0 || 
-                        storedResources.length === 0 ||
-                        validatedResources.some((r, i) => r.url !== resources[i]?.url || r.linkStatus !== resources[i]?.linkStatus);
-      
-      if (hasChanges) {
-        await storageService.saveResources(validatedResources);
-      }
-      
-      const normalized = normalizeResourceLinks(validatedResources);
+      // 즉시 리소스 표시 (검증 전에도)
+      const normalized = normalizeResourceLinks(resources);
       dispatch({ type: 'SET_RESOURCES', payload: normalized });
       updateLinkHealthStatus(normalized);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load resources' });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      // 초기 로딩 실패는 에러를 표시하지 않음 (백그라운드에서 진행 중이므로)
+      console.warn('리소스 로드 오류 (백그라운드에서 재시도)', error);
+      // 빈 배열로 초기화
+      dispatch({ type: 'SET_RESOURCES', payload: [] });
     }
   };
 

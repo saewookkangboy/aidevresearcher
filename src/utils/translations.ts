@@ -240,7 +240,6 @@ export const translations = {
     'urlInput.domainPlaceholder': '도메인 입력 (선택사항)',
     'urlInput.stackPlaceholder': '기술 스택 입력 (선택사항)',
     'urlInput.addButton': '도구 추가',
-    'urlInput.adding': '추가 중...',
     'urlInput.invalidUrl': '올바른 URL 형식이 아닙니다',
     'urlInput.checkingLink': '링크 확인 중...',
     'urlInput.linkActive': '링크가 정상적으로 작동합니다',
@@ -548,7 +547,6 @@ export const translations = {
     'urlInput.domainPlaceholder': 'Enter domain (optional)',
     'urlInput.stackPlaceholder': 'Enter tech stack (optional)',
     'urlInput.addButton': 'Add Tool',
-    'urlInput.adding': 'Adding...',
     'urlInput.invalidUrl': 'Invalid URL format',
     'urlInput.checkingLink': 'Checking link...',
     'urlInput.linkActive': 'Link is working properly',
@@ -562,7 +560,6 @@ export const translations = {
     'urlInput.feedButton': 'Collect Feed',
     'urlInput.feedCollecting': 'Collecting...',
     'urlInput.feedSuccess': 'Successfully collected resources from feed!',
-    'urlInput.feedDescription': 'Enter RSS/Atom Feed URL to automatically collect GitHub repositories from the feed.',
     'urlInput.feedDescription': 'Enter RSS/Atom Feed URL to automatically collect GitHub repositories from the feed.',
     'urlInput.githubReadme': 'GitHub README',
     'urlInput.googleSearch': 'Google Search',
@@ -611,12 +608,9 @@ export const translations = {
     // Role Selector
     'roleSelector.selectRole': 'Select Role',
     'roleSelector.noRole': 'No Role',
-    'roleSelector.selected': 'role is selected',
+    'roleSelector.selected': 'Role is selected',
     'roleSelector.description': 'Select a role to get customized tool recommendations',
     'roleSelector.clearRole': 'Clear Role',
-    'roleSelector.selected': '역할이 선택되었습니다',
-    'roleSelector.description': '역할을 선택하면 맞춤 도구를 추천해드립니다',
-    'roleSelector.clearRole': '역할 초기화',
     
     // Common Advanced
     'common.empty': 'Empty',
