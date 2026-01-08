@@ -63,6 +63,7 @@ function delay(ms: number) {
 }
 
 export function OptimizationBatch() {
+  const { t } = useLanguage();
   const [domain, setDomain] = useState('');
   const [jobs, setJobs] = useState<Job[]>(BASE_JOBS);
   const [running, setRunning] = useState(false);

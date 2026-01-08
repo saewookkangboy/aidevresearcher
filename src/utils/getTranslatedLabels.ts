@@ -36,7 +36,7 @@ export function useTranslatedLabels() {
  * 다국어 지원 라벨 가져오기 함수 (훅 없이 사용)
  */
 export function getTranslatedLabel(key: string, language: 'ko' | 'en' = 'en'): string {
-  const translations = {
+  const translations: Record<'ko' | 'en', Record<string, string>> = {
     ko: {
       'resourceType.CLI_EXTENSION': 'CLI 확장',
       'resourceType.AGENT_SKILL': '에이전트 스킬',
@@ -75,6 +75,10 @@ export function getTranslatedLabel(key: string, language: 'ko' | 'en' = 'en'): s
     },
   };
 
-  return translations[language]?.[key] || key;
+  const langTranslations = translations[language];
+  if (langTranslations && key in langTranslations) {
+    return langTranslations[key];
+  }
+  return key;
 }
 
