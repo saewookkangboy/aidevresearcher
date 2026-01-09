@@ -21,6 +21,21 @@ interface SourceItem {
   command?: string;
 }
 
+interface SocialMetrics {
+  likes?: number;
+  shares?: number;
+  trendingDate?: string;
+  [key: string]: unknown;
+}
+
+interface ResourceMeta {
+  title?: string;
+  statusCode?: number;
+  contentType?: string;
+  lastFetchedAt?: string;
+  [key: string]: unknown;
+}
+
 interface Resource {
   id: string;
   title: string;
@@ -35,8 +50,8 @@ interface Resource {
   source: string;
   source_type: string;
   link_status: string;
-  social_metrics?: any;
-  meta?: any;
+  social_metrics?: SocialMetrics | string;
+  meta?: ResourceMeta | string;
 }
 
 export class ResourceCollector {
@@ -126,8 +141,19 @@ export class ResourceCollector {
       }
       if (!resp.ok) throw new Error('github fetch failed');
 
-      const data = await resp.json();
-      return (data.items || []).map((item: any) => ({
+      interface GitHubRepository {
+        full_name?: string;
+        name: string;
+        html_url: string;
+        language?: string;
+      }
+      
+      interface GitHubSearchResponse {
+        items?: GitHubRepository[];
+      }
+      
+      const data = await resp.json() as GitHubSearchResponse;
+      return (data.items || []).map((item) => ({
         title: item.full_name || item.name,
         url: item.html_url,
         command: item.language && typeof item.language === 'string' && item.language.toLowerCase().includes('python')

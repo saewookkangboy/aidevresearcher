@@ -22,20 +22,22 @@ const router = Router();
 // 모든 리소스 조회
 router.get('/', apiLimiter, validateQuery(GetResourcesQuerySchema), async (req: Request, res: Response) => {
   try {
-    const { type, limit, offset } = req.query as any;
+    const { type, limit = '50', offset = '0' } = req.query as { type?: string; limit?: string; offset?: string };
     
-    let query = 'SELECT * FROM resources';
-    const params: any[] = [];
+    let sqlQuery = 'SELECT * FROM resources';
+    const params: (string | number)[] = [];
+    let paramIndex = 1;
     
     if (type) {
-      query += ' WHERE type = $1';
+      sqlQuery += ` WHERE type = $${paramIndex}`;
       params.push(type);
+      paramIndex++;
     }
     
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+    sqlQuery += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
     
-    const result = await pool.query(query, params);
+    const result = await pool.query(sqlQuery, params);
     logger.info('Resources fetched', { count: result.rows.length, type, limit, offset });
     res.json(result.rows);
   } catch (error) {
@@ -121,11 +123,11 @@ router.post('/', strictLimiter, validateBody(CreateResourceSchema), async (req: 
 router.put('/:id', apiLimiter, validateParams(IdParamSchema), validateBody(UpdateResourceSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = req.body as Record<string, unknown>;
     
     // 업데이트할 필드만 동적으로 구성
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | boolean | null)[] = [];
     let paramIndex = 1;
 
     Object.keys(updates).forEach((key) => {
@@ -134,7 +136,7 @@ router.put('/:id', apiLimiter, validateParams(IdParamSchema), validateBody(Updat
         if (key === 'social_metrics' || key === 'meta') {
           values.push(updates[key] ? JSON.stringify(updates[key]) : null);
         } else {
-          values.push(updates[key]);
+          values.push(updates[key] as string | number | boolean | null);
         }
         paramIndex++;
       }
@@ -148,8 +150,8 @@ router.put('/:id', apiLimiter, validateParams(IdParamSchema), validateBody(Updat
     fields.push(`updated_at = NOW()`);
     values.push(id);
 
-    const query = `UPDATE resources SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
-    const result = await pool.query(query, values);
+    const sqlQuery = `UPDATE resources SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+    const result = await pool.query(sqlQuery, values);
 
     if (result.rows.length === 0) {
       logger.warn('Resource not found for update', { id });
@@ -186,33 +188,33 @@ router.delete('/:id', strictLimiter, validateParams(IdParamSchema), async (req: 
 // 리소스 검색
 router.get('/search', searchLimiter, validateQuery(SearchResourcesQuerySchema), async (req: Request, res: Response) => {
   try {
-    const { q, type, platform } = req.query as any;
+    const { q, type, platform } = req.query as { q?: string; type?: string; platform?: string };
     
-    let query = 'SELECT * FROM resources WHERE 1=1';
-    const params: any[] = [];
+    let sqlQuery = 'SELECT * FROM resources WHERE 1=1';
+    const params: string[] = [];
     let paramIndex = 1;
 
     if (q) {
-      query += ` AND (title ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
+      sqlQuery += ` AND (title ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
       params.push(`%${q}%`);
       paramIndex++;
     }
 
     if (type) {
-      query += ` AND type = $${paramIndex}`;
+      sqlQuery += ` AND type = $${paramIndex}`;
       params.push(type);
       paramIndex++;
     }
 
     if (platform) {
-      query += ` AND $${paramIndex} = ANY(platforms)`;
+      sqlQuery += ` AND $${paramIndex} = ANY(platforms)`;
       params.push(platform);
       paramIndex++;
     }
 
-    query += ' ORDER BY created_at DESC';
+    sqlQuery += ' ORDER BY created_at DESC';
     
-    const result = await pool.query(query, params);
+    const result = await pool.query(sqlQuery, params);
     logger.info('Resources searched', { query: q, type, platform, count: result.rows.length });
     res.json(result.rows);
   } catch (error) {

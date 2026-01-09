@@ -46,7 +46,7 @@ export function errorHandler(
     });
     return res.status(400).json({
       error: '입력 검증 실패',
-      details: err.errors.map((e: any) => ({
+      details: err.errors.map((e) => ({
         path: e.path.join('.'),
         message: e.message,
       })),
@@ -55,7 +55,7 @@ export function errorHandler(
 
   // PostgreSQL 에러
   if (err && typeof err === 'object' && 'code' in err) {
-    const pgError = err as any;
+    const pgError = err as { code?: string; detail?: string; message?: string };
     
     // 중복 키 에러
     if (pgError.code === '23505') {

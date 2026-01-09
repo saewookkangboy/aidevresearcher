@@ -15,6 +15,7 @@ import { performanceMonitor } from './performanceMonitor';
  */
 class AutoOptimizer {
   private optimizationInterval: number | null = null;
+  private lastCheck: number | null = null;
   private readonly CHECK_INTERVAL = 60000; // 1분마다 체크
   private readonly OPTIMIZATION_THRESHOLD = 100; // 100ms 이상이면 최적화
 
@@ -48,6 +49,8 @@ class AutoOptimizer {
    * 자동 최적화 수행
    */
   private performAutoOptimization(): void {
+    this.lastCheck = Date.now();
+    
     const roles: AgentRole[] = ['frontend', 'backend', 'pm', 'fullstack', 'devops', 'designer'];
 
     roles.forEach(role => {
@@ -173,7 +176,7 @@ class AutoOptimizer {
   } {
     return {
       isRunning: this.optimizationInterval !== null,
-      lastCheck: null, // TODO: 마지막 체크 시간 저장
+      lastCheck: this.lastCheck,
       roleOptimizations: {},
     };
   }

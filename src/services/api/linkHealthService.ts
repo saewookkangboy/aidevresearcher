@@ -16,47 +16,52 @@ export class LinkHealthService {
         return 'broken';
       }
 
-      // 개발 환경에서는 실제 네트워크 요청 없이 시뮬레이션
-      // CORS 오류와 rate limiting 문제를 완전히 방지
-      if (import.meta.env.DEV) {
-        // 개발 환경에서는 URL 형식만 검증하고 항상 active로 반환
-        // 실제 체크는 프로덕션 환경에서만 수행
-        return 'active';
-      }
-
-      // 프로덕션 환경에서만 프록시 서비스 사용 시도
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      // 개발 환경에서도 실제 체크 수행 (404 오류 감지를 위해)
+      // 프록시 서비스를 통해 실제 HTTP 상태 확인
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃 (짧게 설정)
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5초 타임아웃
 
       try {
-        // 프록시를 통한 HEAD 요청 시도
+        // 프록시를 통한 GET 요청 시도 (HEAD는 allorigins.win에서 지원하지 않을 수 있음)
         const response = await fetch(proxyUrl, {
-          method: 'HEAD',
+          method: 'GET',
           signal: controller.signal,
           redirect: 'follow',
         });
         
         clearTimeout(timeoutId);
         
-        // HTTP 상태 코드 확인
-        if (response.ok || response.status === 200 || response.status === 301 || response.status === 302) {
+        // allorigins.win은 항상 200을 반환하므로 JSON 응답을 파싱하여 실제 HTTP 상태 확인
+        try {
+          const data = await response.json();
+          
+          // allorigins.win 응답 구조: { status: { http_code: number, ... }, contents: string, ... }
+          // 실제 HTTP 상태 코드 확인
+          if (data.status?.http_code && data.status.http_code >= 400) {
+            return 'broken';
+          }
+          
+          // 응답 본문 확인 (404 오류 메시지 확인)
+          const content = data.contents || '';
+          if (content.includes('404') || content.includes('Not Found') || content.includes('Page not found') || content.includes('404 Not Found')) {
+            return 'broken';
+          }
+          
+          // http_code가 없거나 200대인 경우 active
           return 'active';
-        } else if (response.status === 429) {
-          // Rate limit 오류는 조용히 처리하고 직접 요청으로 폴백
-          return await this.checkLinkDirect(url);
-        } else if (response.status >= 400) {
-          // 404, 403 등은 broken
-          return 'broken';
+        } catch (parseError) {
+          // JSON 파싱 실패 시 response.status로 fallback
+          if (response.status >= 400) {
+            return 'broken';
+          }
+          return 'active';
         }
-        
-        return 'active';
       } catch (fetchError) {
         clearTimeout(timeoutId);
         
         // 타임아웃 또는 네트워크 오류는 직접 요청으로 폴백
-        // 에러를 조용히 처리 (브라우저가 자동으로 출력하는 CORS 오류는 막을 수 없음)
         return await this.checkLinkDirect(url);
       }
     } catch (error) {
@@ -65,55 +70,12 @@ export class LinkHealthService {
     }
   }
 
-  private async checkLinkDirect(url: string): Promise<LinkStatus> {
-    // 개발 환경에서는 실제 네트워크 요청 없이 시뮬레이션
-    // CORS 오류를 완전히 방지하기 위해
-    if (import.meta.env.DEV) {
-      // 개발 환경에서는 URL 형식만 검증하고 항상 active로 반환
-      // 실제 체크는 프로덕션 환경에서만 수행
-      try {
-        const urlObj = new URL(url);
-        // GitHub URL은 대부분 유효하다고 가정
-        if (urlObj.hostname.includes('github.com')) {
-          return 'active';
-        }
-        // 기타 URL도 일단 active로 간주
-        return 'active';
-      } catch {
-        return 'broken';
-      }
-    }
-
-    // 프로덕션 환경에서만 실제 네트워크 요청 수행
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    try {
-      // 이미지나 파비콘 등 작은 리소스를 요청하여 확인
-      // 또는 HEAD 요청 시도
-      await fetch(url, {
-        method: 'GET',
-        mode: 'no-cors', // CORS 우회 (하지만 응답 상태 확인 불가)
-        signal: controller.signal,
-        cache: 'no-cache',
-      });
-      
-      clearTimeout(timeoutId);
-      // no-cors 모드에서는 상태를 정확히 알 수 없지만,
-      // 요청이 전송되었다면 일단 active로 간주
-      return 'active';
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      // 네트워크 오류나 타임아웃은 broken으로 처리
-      // 에러를 조용히 처리 (콘솔에 출력하지 않음)
-      if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('Failed to fetch'))) {
-        return 'broken';
-      }
-      
-      // 다른 오류는 일단 active로 간주 (CORS 제한일 수 있음)
-      return 'active';
-    }
+  private async checkLinkDirect(_url: string): Promise<LinkStatus> {
+    // 직접 요청은 프록시 실패 시에만 사용
+    // no-cors 모드는 응답 상태를 확인할 수 없으므로 사용하지 않음
+    // 직접 요청은 CORS 제한으로 인해 상태를 확인할 수 없으므로
+    // 프록시가 실패한 경우 broken으로 처리
+    return 'broken';
   }
 
   async findAlternativeURL(brokenUrl: string): Promise<string | null> {
@@ -153,12 +115,12 @@ export class LinkHealthService {
         if (pathParts.length > 2) {
           // 리포지토리 루트로 시도
           return `https://github.com/${pathParts[0]}/${pathParts[1]}`;
-      }
-        
-        // 4. example.com 또는 잘못된 경로 처리
-        if (brokenUrl.includes('example.com') || brokenUrl.includes('example/')) {
-          return 'https://github.com/langchain-ai/langchain';
         }
+      }
+      
+      // 4. example.com 또는 잘못된 경로 처리
+      if (brokenUrl.includes('example.com') || brokenUrl.includes('example/')) {
+        return 'https://github.com/langchain-ai/langchain';
       }
       
       // 일반적인 URL 패턴 수정
