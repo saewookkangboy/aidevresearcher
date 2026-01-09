@@ -21,7 +21,8 @@ export interface ErrorLog {
 
 // Node.js 환경인지 브라우저 환경인지 확인
 const isBrowser = typeof (globalThis as any).window !== 'undefined' && typeof (globalThis as any).navigator !== 'undefined';
-const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
+// 프로덕션 환경이 아닌 경우 개발 환경으로 간주 (development, test 등 포함)
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const API_BASE_URL = process.env.API_URL || process.env.VITE_API_URL || 'http://localhost:8000';
 

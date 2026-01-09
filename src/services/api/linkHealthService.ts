@@ -74,8 +74,8 @@ export class LinkHealthService {
     // 직접 요청은 프록시 실패 시에만 사용
     // no-cors 모드는 응답 상태를 확인할 수 없으므로 사용하지 않음
     // 직접 요청은 CORS 제한으로 인해 상태를 확인할 수 없으므로
-    // 프록시가 실패한 경우 broken으로 처리
-    return 'broken';
+    // 프록시가 실패한 경우 불확실한 상태로 처리 (false negative 방지)
+    return 'checking';
   }
 
   async findAlternativeURL(brokenUrl: string): Promise<string | null> {
@@ -118,9 +118,10 @@ export class LinkHealthService {
         }
       }
       
-      // 4. example.com 또는 잘못된 경로 처리
-      if (brokenUrl.includes('example.com') || brokenUrl.includes('example/')) {
-        return 'https://github.com/langchain-ai/langchain';
+      // 4. example.com 호스트명 정확히 매칭 (경로에 'example/'가 포함된 경우는 제외)
+      if (urlObj.hostname === 'example.com') {
+        // example.com은 플레이스홀더이므로 대체 URL 제공하지 않음
+        return null;
       }
       
       // 일반적인 URL 패턴 수정
